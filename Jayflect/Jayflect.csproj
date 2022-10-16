@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AssemblyName>Jayflect</AssemblyName>
+        <RootNamespace>Jayflect</RootNamespace>
+        <Title>Jayflect- C# Relfection Helper LIbrary</Title>
+        <Authors>Timothy Jay</Authors>
+        <Description>Another reflection library for C#</Description>
+        <Company>Timothy Jay</Company>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Fody" Version="6.6.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="InlineIL.Fody" Version="1.7.2">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Compile Remove="Reflection\**" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <EmbeddedResource Remove="Reflection\**" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <None Remove="Reflection\**" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Jay.Core\Jay.Core.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Formatting" />
+    </ItemGroup>
+    
+
+
+</Project>
