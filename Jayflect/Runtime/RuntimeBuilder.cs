@@ -1,35 +1,41 @@
 ﻿using System.Reflection.Emit;
+using Jayflect.Extensions;
 
 namespace Jayflect.Runtime;
 
-public interface IDelegateSignature : IEquatable<IDelegateSignature>
+public record class DelegateSignature(Type ReturnType, Type[] ParameterTypes)
 {
-    Type ReturnType { get; }
-    Type[] ParameterTypes { get; }
+    public static DelegateSignature FromMethod(MethodBase method) => 
+        new(method.ReturnType(), method.GetParameterTypes());
+    public static DelegateSignature FromDelegate(Delegate @delegate) =>
+        FromMethod(@delegate.Method);
+    public static DelegateSignature FromDelegate<TDelegate>()
+        where TDelegate : Delegate =>
+        FromMethod(typeof(TDelegate).GetInvokeMethod()!);
+    public static DelegateSignature FromDelegateType(Type delegateType)
+    {
+        if (!delegateType.Implements<Delegate>())
+            throw new ArgumentException("You must pass a valid Delegate Type", nameof(delegateType));
+        return FromMethod(delegateType.GetInvokeMethod()!);
+    }
 }
 
-public class RuntimeMethodBuilder : IDelegateSignature
+public class RuntimeMethodBuilder
 {
-    protected DynamicMethod _dynamicMethod;
+    protected readonly DynamicMethod _dynamicMethod;
+
+    public string Name => _dynamicMethod.Name;
+    public MethodAttributes Attributes => _dynamicMethod.Attributes;
+    public CallingConventions CallingConventions => _dynamicMethod.CallingConvention;
+    public Type ReturnType => _dynamicMethod.ReturnType;
+    public Type[] ParameterTypes => _dynamicMethod.GetParameterTypes();
     
-    public string Name { get; }
-    public MethodAttributes Attributes { get; }
-    public CallingConventions CallingConventions { get; }
-    public Type ReturnType { get; }
-    public Type[] ParameterTypes { get; }
-    
-    public RuntimeMethodBuilder(IDelegateSignature signature, string? name = null)
+    public RuntimeMethodBuilder(DynamicMethod dynamicMethod)
     {
-        this.Name = MemberNaming.CreateMemberName(name);
-        this.Attributes = MethodAttributes.Public | MethodAttributes.Static;
-        this.CallingConventions = CallingConventions.Standard;
-        this.ReturnType = signature.ReturnType;
-        this.ParameterTypes = signature.ParameterTypes;
-        _dynamicMethod = new DynamicMethod(Name,
-            Attributes, CallingConventions, ReturnType, ParameterTypes,
-            RuntimeBuilder.ModuleBuilder,
-            true);
+        _dynamicMethod = dynamicMethod;
     }
+    
+    public Delegate CreateDelegate() => _dynamicMethod.CreateDelegate()
 }
 
 
@@ -47,10 +53,10 @@ public static class RuntimeBuilder
         AssemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
         ModuleBuilder = AssemblyBuilder.DefineDynamicModule($"{nameof(RuntimeBuilder)}_Module");
     }
-
-    internal static DynamicMethod CreateDynamicMethod(IDelegateSignature signature, string? name = null)
+    
+    internal static DynamicMethod CreateDynamicMethod(DelegateSignature signature, string? name = null)
     {
-        return new DynamicMethod(MemberNaming.CreateMemberName(name),
+        return new DynamicMethod(MemberNaming.CreateMemberName(MemberTypes.Method, name),
             MethodAttributes.Public | MethodAttributes.Static,
             CallingConventions.Standard,
             signature.ReturnType,

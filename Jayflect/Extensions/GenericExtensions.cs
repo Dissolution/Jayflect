@@ -116,13 +116,15 @@ public static class GenericExtensions
     {
         return (_unhookEventsDelegateCache.GetOrAdd<T>(CreateEventUnhooker) as Action<T>)!;
     }
-
+    
     private static Delegate CreateEventUnhooker(Type type)
     {
         var fields = type.GetEvents(Reflect.Flags.All)
             .Select(vent => vent.GetBackingField())
             .Where(field => field is not null)
             .ToList();
+        throw new NotImplementedException();
+        /*
         return RuntimeBuilder.CreateDelegate(typeof(Action<>).MakeGenericType(type),
             emitter =>
             {
@@ -134,6 +136,7 @@ public static class GenericExtensions
                 }
                 emitter.Ret();
             });
+            */
     }
 
     /// <summary>

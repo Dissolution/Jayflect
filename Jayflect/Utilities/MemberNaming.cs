@@ -10,39 +10,44 @@ namespace Jayflect;
 /// </summary>
 public static class MemberNaming
 {
+    private const char BAD_CHAR = 'X';
+    private static ulong _nameCount = 0UL;
+    
     /// <summary>
-    /// Is the given <see cref="char"/> <paramref name="ch"/> valid as the first character in a <see cref="MemberInfo"/> name?
+    /// Is the given <paramref name="ch"/> a valid <see cref="MemberInfo"/> Name <see cref="char"/>?
     /// </summary>
+    /// <param name="ch">The <see cref="char"/> to validate.</param>
+    /// <param name="firstChar">Whether or not you're validating the first character in a Member Name.</param>
+    /// <returns><c>true</c> if <paramref name="ch"/> is valid; otherwise <c>false</c></returns>
     /// <see cref="https://stackoverflow.com/questions/950616/what-characters-are-allowed-in-c-sharp-class-name"/>
-    private static bool IsValidNameFirstChar(char ch)
+    public static bool IsValidNameCharacter(char ch, bool firstChar = false)
     {
-        var category = char.GetUnicodeCategory(ch);
-        return ch == '_' ||
-               category == UnicodeCategory.UppercaseLetter ||
-               category == UnicodeCategory.LowercaseLetter ||
-               category == UnicodeCategory.TitlecaseLetter ||
-               category == UnicodeCategory.ModifierLetter ||
-               category == UnicodeCategory.OtherLetter;
-    }
+        // Fast allow underscore always
+        // '_'.UnicodeCategory = ConnectorPunctuation
+        if (ch == '_') return true;
 
-    /// <summary>
-    /// Is the given <see cref="char"/> <paramref name="ch"/> valid as any non-first character in a <see cref="MemberInfo"/> name?
-    /// </summary>
-    /// <see cref="https://stackoverflow.com/questions/950616/what-characters-are-allowed-in-c-sharp-class-name"/>
-    private static bool IsValidNameChar(char ch)
-    {
         var category = char.GetUnicodeCategory(ch);
-        return category == UnicodeCategory.UppercaseLetter ||
-               category == UnicodeCategory.LowercaseLetter ||
-               category == UnicodeCategory.TitlecaseLetter ||
-               category == UnicodeCategory.ModifierLetter ||
-               category == UnicodeCategory.OtherLetter ||
-               category == UnicodeCategory.NonSpacingMark ||
-               category == UnicodeCategory.SpacingCombiningMark ||
-               category == UnicodeCategory.DecimalDigitNumber ||
-               category == UnicodeCategory.LetterNumber ||
-               category == UnicodeCategory.Format ||
-               category == UnicodeCategory.ConnectorPunctuation;
+
+        // Always allowed
+        if (category is UnicodeCategory.UppercaseLetter
+            or UnicodeCategory.LowercaseLetter
+            or UnicodeCategory.TitlecaseLetter
+            or UnicodeCategory.ModifierLetter
+            or UnicodeCategory.OtherLetter)
+        {
+            return true;
+        }
+
+        // No further characters are valid for a first char
+        if (firstChar) return false;
+
+        // Remaining allowed characters
+        return category is UnicodeCategory.NonSpacingMark
+            or UnicodeCategory.SpacingCombiningMark
+            or UnicodeCategory.DecimalDigitNumber
+            or UnicodeCategory.LetterNumber
+            or UnicodeCategory.Format
+            or UnicodeCategory.ConnectorPunctuation;
     }
 
     /// <summary>
@@ -54,116 +59,70 @@ public static class MemberNaming
         var len = name.Length;
         if (len == 0) return false;
         char ch = name[0];
-        if (!IsValidNameFirstChar(ch)) return false;
+        if (!IsValidNameCharacter(ch, true)) return false;
         for (var i = 1; i < len; i++)
         {
-            if (!IsValidNameChar(ch)) return false;
+            if (!IsValidNameCharacter(ch, false)) return false;
         }
         return true;
     }
 
-    /// <summary>
-    /// Tries to write a <paramref name="name"/> to a <see cref="TextBuilder"/>, returning if it was validly written
-    /// </summary>
-    internal static bool TryWriteName([NotNullWhen(true)] string? name, StringBuilder text)
+    public static string CreateMemberName(MemberTypes memberType, string? suggestedName = null)
     {
-        if (string.IsNullOrEmpty(name)) return false;
-
-        int start = text.Length;
-        char ch;
-        int i;
-        bool valid = false;
-        // Get a valid first name char
-        ch = name[0];
-        if (IsValidNameFirstChar(ch))
+        ReadOnlySpan<char> name = suggestedName;
+        name = name.Trim();
+        if (name.Length == 0)
         {
-            text.Append(ch);
-            // We used the first char
-            i = 1;
-            valid = true;
-        }
-        else
-        {
-            // Have to start with underscore
-            text.Append('_');
-            i = 0;
+            // No good name passed, return semi-random name
+            ulong nameId = Interlocked.Increment(ref _nameCount);
+            return $"{memberType}_{nameId}";
         }
 
-        for (;i < name.Length; i++)
+        using var _ = StringBuilderPool.Shared.Borrow(out var builder);
+        char ch = name[0];
+        bool appendedBadChar = false;
+        if (!IsValidNameCharacter(ch, true))
+        {
+            builder.Append('_');
+        }
+        builder.Append(ch);
+
+        for (var i = 1; i < name.Length; i++)
         {
             ch = name[i];
-            if (IsValidNameChar(ch))
+            if (IsValidNameCharacter(ch))
             {
-                text.Append(ch);
-                valid = true;
+                builder.Append(ch);
+                appendedBadChar = false;
+            }
+            else if (!appendedBadChar)
+            {
+                builder.Append(BAD_CHAR);
+                appendedBadChar = true;
             }
         }
-
-        if (!valid)
-        {
-            text.Length = start;
-            return false;
-        }
-
-        return true;
+        return builder.ToString();
     }
-
-    public static string CreateMemberName(string? suggestedName = null)
-    {
-        var text = StringBuilderPool.Shared.Borrow();
-        if (!TryWriteName(suggestedName, text))
-        {
-            return Guid.NewGuid().ToString("N");
-        }
-        return StringBuilderPool.Shared.ReturnToString(text);
-    }
-
+    
     /// <summary>
     /// Creates a backing <see cref="FieldInfo"/> name for a <see cref="PropertyInfo"/>
     /// </summary>
     public static string CreateBackingFieldName(PropertyInfo property)
     {
-        return string.Create(property.Name.Length + 1, property.Name, (span, name) =>
-        {
-            span[0] = '_';
-            span[1] = char.ToLower(name[0]);
-            for (var i = 1; i < name.Length; i++)
+        return string.Create(property.Name.Length + 1,
+            property.Name,
+            (span, name) =>
             {
-                span[i + 1] = name[i];
-            }
-        });
+                span[0] = '_';
+                span[1] = char.ToLower(name[0]);
+                name.AsSpan(1).CopyTo(span[2..]);
+            });
     }
 
     public static string CreateInterfaceImplementationName(Type interfaceType)
     {
-        string interfaceName = interfaceType.Name;
-        Debug.Assert(!string.IsNullOrWhiteSpace(interfaceName));
-        return string.Create(interfaceName.Length + 3,
-            interfaceName,
-            (span, name) =>
-            {
-                int nameIndex;
-                if (name[0] is 'I' or 'i')
-                {
-                    nameIndex = 1;
-                }
-                else
-                {
-                    nameIndex = 0;
-                }
-
-                int spanIndex = 0;
-                span[spanIndex++] = char.ToUpper(name[nameIndex++]);
-                while (nameIndex < name.Length)
-                {
-                    span[spanIndex++] = name[nameIndex++];
-                }
-                Debug.Assert(nameIndex == name.Length);
-                span[spanIndex++] = 'I';
-                span[spanIndex++] = 'm';
-                span[spanIndex++] = 'p';
-                span[spanIndex] = 'l';
-            });
+        ReadOnlySpan<char> interfaceName = interfaceType.Name;
+        interfaceName = interfaceName.TrimStart('I');
+        return $"{interfaceName}Impl";
     }
-
 }
