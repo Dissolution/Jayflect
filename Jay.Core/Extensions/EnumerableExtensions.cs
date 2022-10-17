@@ -10,4 +10,38 @@ public static class EnumerableExtensions
         if (e.MoveNext()) return defaultValue;
         return value;
     }
+
+    public static IEnumerable<T> IgnoreExceptions<T>(this IEnumerable<T> enumerable)
+    {
+        using var enumerator = Result.InvokeOrDefault(() => enumerable.GetEnumerator());
+        if (enumerator is null) yield break;
+
+        while (true)
+        {
+            // Move next
+            try
+            {
+                if (!enumerator.MoveNext())
+                    yield break;
+            }
+            catch (Exception ex)
+            {
+                // ignore this, stop enumerating
+                yield break;
+            }
+            
+            // Yield current
+            T current;
+            try
+            {
+                current = enumerator.Current;
+            }
+            catch (Exception ex)
+            {
+                // ignore this, but continue enumerating
+                continue;
+            }
+            yield return current;
+        }
+    }
 }

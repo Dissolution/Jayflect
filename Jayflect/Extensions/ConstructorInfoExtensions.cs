@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace Jay.Reflection;
+﻿namespace Jayflect.Extensions;
 
 public static class ConstructorInfoExtensions
 {

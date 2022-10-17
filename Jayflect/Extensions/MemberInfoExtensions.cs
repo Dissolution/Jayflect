@@ -1,15 +1,15 @@
-﻿using System.Reflection;
-using Jayflect;
+﻿using Jay;
 
-namespace Jay.Reflection;
+namespace Jayflect.Extensions;
 
 public static class MemberInfoExtensions
 {
-    public static Type? OwnerType(this MemberInfo? memberInfo)
+    public static Type OwnerType(this MemberInfo memberInfo)
     {
-        return memberInfo?.ReflectedType ?? memberInfo?.DeclaringType;
+        return memberInfo.ReflectedType ?? memberInfo.DeclaringType ?? memberInfo.Module.GetType();
     }
 
+    /*
     internal static Result TryGetInstanceType(this MemberInfo? memberInfo, [NotNullWhen(true)] out Type? instanceType)
     {
         if (memberInfo is null)
@@ -45,6 +45,7 @@ public static class MemberInfoExtensions
         }
         return true;
     }
+    */
 
     public static Visibility Visibility(this MemberInfo? memberInfo)
     {
@@ -54,8 +55,6 @@ public static class MemberInfoExtensions
             return propertyInfo.Visibility();
         if (memberInfo is EventInfo eventInfo)
             return eventInfo.Visibility();
-        if (memberInfo is ConstructorInfo constructorInfo)
-            return constructorInfo.Visibility();
         if (memberInfo is MethodBase methodBase)
             return methodBase.Visibility();
         if (memberInfo is Type type)

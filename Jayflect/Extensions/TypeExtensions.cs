@@ -1,13 +1,10 @@
-﻿using System.Reflection;
-using Jayflect;
-
-namespace Jay.Reflection;
+﻿namespace Jayflect.Extensions;
 
 public static class TypeExtensions
 {
-    public static MethodInfo? GetInvokeMethod(this Type? type)
+    public static MethodInfo? GetInvokeMethod(this Type? delegateType)
     {
-        return type?.GetMethod("Invoke", Reflect.PublicFlags);
+        return delegateType?.GetMethod("Invoke", Reflect.Flags.Public);
     }
 
     public static bool IsStatic(this Type? type)
@@ -58,7 +55,7 @@ public static class TypeExtensions
                && !type.IsNestedFamANDAssem;
     }
 
-// only nested types can be declared "protected"
+    // only nested types can be declared "protected"
     private static bool IsProtected(Type type)
     {
         return !type.IsVisible
@@ -73,7 +70,7 @@ public static class TypeExtensions
                && !type.IsNestedFamANDAssem;
     }
 
-// only nested types can be declared "private"
+    // only nested types can be declared "private"
     private static bool IsPrivate(Type type)
     {
         return !type.IsVisible
@@ -86,5 +83,47 @@ public static class TypeExtensions
                && !type.IsNestedAssembly
                && !type.IsNestedFamORAssem
                && !type.IsNestedFamANDAssem;
+    }
+    
+    public static Type OwnerType(this FieldInfo field) => field.ReflectedType ?? field.DeclaringType ?? field.Module.GetType();
+
+    private static readonly MethodInfo _isReferenceMethod;
+    private static readonly MethodInfo _sizeOfMethod;
+    
+    static TypeExtensions()
+    {
+        _isReferenceMethod = Reflect.FindMember(() => typeof(RuntimeHelpers)
+            .GetMethod(nameof(RuntimeHelpers.IsReferenceOrContainsReferences),
+                Reflect.Flags.PublicStatic,
+                Type.EmptyTypes));
+        _sizeOfMethod = Reflect.FindMember(() => typeof(Unsafe)
+            .GetMethod(nameof(Unsafe.SizeOf),
+                Reflect.Flags.PublicStatic,
+                Type.EmptyTypes));
+    }
+
+    public static bool IsReferenceOrContainsReferences(this Type type)
+    {
+        return (bool)_isReferenceMethod.MakeGenericMethod(type).Invoke(null, null)!;
+    }
+
+    public static bool IsUnmanaged(this Type type) => !IsReferenceOrContainsReferences(type);
+
+    public static object? GetDefault(this Type type)
+    {
+        if (type.IsClass || type.IsInterface)
+            return null;
+        return Activator.CreateInstance(type);
+    }
+
+    public static int? GetSize(this Type type)
+    {
+        if (IsReferenceOrContainsReferences(type)) return null;
+        return (int?)_sizeOfMethod.MakeGenericMethod(type).Invoke(null, null);
+    }
+
+    public static object? GetUninitialized(this Type type)
+    {
+        return RuntimeHelpers.GetUninitializedObject(type);
     }
 }

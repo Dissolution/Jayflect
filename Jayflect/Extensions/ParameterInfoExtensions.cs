@@ -1,12 +1,9 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
 
-namespace Jay.Reflection;
+namespace Jayflect.Extensions;
 
 public static class ParameterInfoExtensions
 {
-   
-
     public static ParameterAccess GetAccess(this ParameterInfo parameter, out Type parameterType)
     {
         parameterType = parameter.ParameterType;
@@ -25,6 +22,7 @@ public static class ParameterInfoExtensions
 
             return ParameterAccess.Ref;
         }
+        
         return ParameterAccess.Default;
     }
 

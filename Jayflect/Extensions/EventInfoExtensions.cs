@@ -1,31 +1,28 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
-using Jay.Reflection.Building;
-using Jay.Reflection.Caching;
-using Jay.Reflection.Exceptions;
-using Jay.Reflection.Internal;
-using Jayflect;
 
-namespace Jay.Reflection;
+namespace Jayflect.Extensions;
 
 public static class EventInfoExtensions
 {
     public static MethodInfo? GetAdder(this EventInfo? eventInfo)
     {
-        return eventInfo?.GetAddMethod(false) ??
-               eventInfo?.GetAddMethod(true);
+        if (eventInfo is null) return null;
+        return eventInfo.GetAddMethod(false) ??
+               eventInfo.GetAddMethod(true);
     }
 
     public static MethodInfo? GetRemover(this EventInfo? eventInfo)
     {
-        return eventInfo?.GetRemoveMethod(false) ??
-               eventInfo?.GetRemoveMethod(true);
+        if (eventInfo is null) return null;
+        return eventInfo.GetRemoveMethod(false) ??
+               eventInfo.GetRemoveMethod(true);
     }
 
     public static MethodInfo? GetRaiser(this EventInfo? eventInfo)
     {
-        return eventInfo?.GetRaiseMethod(false) ??
-               eventInfo?.GetRaiseMethod(true);
+        if (eventInfo is null) return null;
+        return eventInfo.GetRaiseMethod(false) ??
+               eventInfo.GetRaiseMethod(true);
     }
 
     public static Visibility Visibility(this EventInfo? eventInfo)
@@ -41,8 +38,7 @@ public static class EventInfoExtensions
 
     public static bool IsStatic(this EventInfo? eventInfo)
     {
-        if (eventInfo is null)
-            return false;
+        if (eventInfo is null) return false;
         return eventInfo.GetAdder().IsStatic() ||
                eventInfo.GetRemover().IsStatic() ||
                eventInfo.GetRaiser().IsStatic();
@@ -71,10 +67,10 @@ public static class EventInfoExtensions
         {
             flags |= BindingFlags.Instance;
         }
-
         return eventInfo.DeclaringType?.GetField(eventInfo.Name, flags);
     }
 
+    /*
     public static EventAdder<TInstance, THandler> CreateAdder<TInstance, THandler>(this EventInfo eventInfo)
         where THandler : Delegate
     {
@@ -105,7 +101,7 @@ public static class EventInfoExtensions
              * we can just load up that field's value as a MulticastDelegate
              * call GetInvocationList -> Delegate[]
              * and then fire off each one in turn, feeding them the instance as sender and the eventargs
-            */
+            *//*
             var backingField = eventInfo.GetBackingField();
             if (backingField is null)
                 throw new ReflectionException($"Unable to find {eventInfo}'s backing field for a Raiser");
@@ -218,4 +214,5 @@ public static class EventInfoExtensions
                                                                                .Ret();
                                                                        });
     }
+    */
 }

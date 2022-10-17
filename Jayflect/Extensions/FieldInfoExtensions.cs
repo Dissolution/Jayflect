@@ -1,7 +1,4 @@
-﻿using System.Reflection;
-using Jayflect;
-
-namespace Jay.Reflection;
+﻿namespace Jayflect.Extensions;
 
 public static class FieldInfoExtensions
 {

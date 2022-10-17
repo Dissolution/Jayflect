@@ -1,7 +1,6 @@
-﻿using System.Reflection.Emit;
-using Jay.Reflection.Building.Emission;
+﻿/*using System.Reflection.Emit;
 
-namespace Jay.Reflection;
+namespace Jayflect.Extensions;
 
 public static class GetEmitterExtensions
 {
@@ -50,4 +49,4 @@ public static class GetEmitterExtensions
         var emitter = new ILGeneratorEmitter(constructorBuilder.GetILGenerator());
         emit(emitter);
     }
-}
+}*/

@@ -1,4 +1,5 @@
-﻿namespace Jay.Reflection;
+﻿/*
+namespace Jayflect.Extensions;
 
 public delegate TValue Getter<TInstance, out TValue>(ref TInstance instance);
 public delegate void Setter<TInstance, in TValue>(ref TInstance instance, TValue value);
@@ -10,3 +11,4 @@ public delegate void EventDisposer<TInstance>(ref TInstance instance);
 
 public delegate TInstance Constructor<out TInstance>(params object?[] args);
 public delegate TReturn Invoker<TInstance, out TReturn>(ref TInstance instance, params object?[] args);
+*/

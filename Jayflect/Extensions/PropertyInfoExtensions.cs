@@ -1,23 +1,21 @@
-﻿using System.Reflection;
-using System.Reflection.Emit;
-using Jay.Reflection.Building.Emission;
-using Jay.Text;
-using Jayflect;
+﻿using System.Reflection.Emit;
 
-namespace Jay.Reflection;
+namespace Jayflect.Extensions;
 
 public static class PropertyInfoExtensions
 {
     public static MethodInfo? GetGetter(this PropertyInfo? propertyInfo)
     {
-        return propertyInfo?.GetGetMethod(false) ??
-               propertyInfo?.GetGetMethod(true);
+        if (propertyInfo is null) return null;
+        return propertyInfo.GetGetMethod(false) ??
+               propertyInfo.GetGetMethod(true);
     }
         
     public static MethodInfo? GetSetter(this PropertyInfo? propertyInfo)
     {
-        return propertyInfo?.GetSetMethod(false) ??
-               propertyInfo?.GetSetMethod(true);
+        if (propertyInfo is null) return null;
+        return propertyInfo.GetSetMethod(false) ??
+               propertyInfo.GetSetMethod(true);
     }
         
     public static Visibility Visibility(this PropertyInfo? propertyInfo)
@@ -55,12 +53,12 @@ public static class PropertyInfoExtensions
 
     public static FieldInfo? GetBackingField(this PropertyInfo? propertyInfo)
     {
-        if (propertyInfo is null) return null;
-        var owner = propertyInfo.DeclaringType;
-        if (owner is null) return null;
+        var ownerType = propertyInfo?.DeclaringType;
+        if (ownerType is null) return null;
         var flags = BindingFlags.NonPublic;
         flags |= propertyInfo.IsStatic() ? BindingFlags.Static : BindingFlags.Instance;
-        var field = owner.GetField(GetBackingFieldName(propertyInfo), flags);
+        var field = ownerType.GetField(GetBackingFieldName(propertyInfo!), flags);
+        /*
         if (field is null)
         {
             var getter = propertyInfo.GetGetter();
@@ -110,7 +108,7 @@ public static class PropertyInfoExtensions
                               .FirstOrDefault();
             }
         }
-
+*/
         return field;
     }
 

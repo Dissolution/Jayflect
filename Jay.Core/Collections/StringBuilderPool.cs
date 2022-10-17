@@ -2,7 +2,7 @@
 
 namespace Jay.Collections;
 
-internal sealed class StringBuilderPool : ObjectPool<StringBuilder>
+public sealed class StringBuilderPool : ObjectPool<StringBuilder>
 {
     public static StringBuilderPool Shared { get; } = new();
     

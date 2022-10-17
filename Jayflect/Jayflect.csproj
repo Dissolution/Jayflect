@@ -23,26 +23,27 @@
         </PackageReference>
     </ItemGroup>
     
-    <ItemGroup>
-      <Compile Remove="Reflection\**" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <EmbeddedResource Remove="Reflection\**" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <None Remove="Reflection\**" />
-    </ItemGroup>
     
     <ItemGroup>
       <ProjectReference Include="..\Jay.Core\Jay.Core.csproj" />
     </ItemGroup>
     
+    
     <ItemGroup>
-      <Folder Include="Formatting" />
+      <Compile Remove="Reflection\**" />
     </ItemGroup>
     
+    
+    <ItemGroup>
+      <EmbeddedResource Remove="Reflection\**" />
+    </ItemGroup>
+    
+    
+    <ItemGroup>
+      <None Remove="Reflection\**" />
+    </ItemGroup>
+    
+
 
 
 </Project>
