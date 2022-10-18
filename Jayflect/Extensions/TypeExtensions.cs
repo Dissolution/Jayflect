@@ -85,7 +85,7 @@ public static class TypeExtensions
                && !type.IsNestedFamANDAssem;
     }
     
-    public static Type OwnerType(this FieldInfo field) => field.ReflectedType ?? field.DeclaringType ?? field.Module.GetType();
+    //public static Type OwnerType(this Type type) => type.ReflectedType ?? type.DeclaringType ?? type.Module.GetType();
 
     private static readonly MethodInfo _isReferenceMethod;
     private static readonly MethodInfo _sizeOfMethod;
@@ -126,14 +126,6 @@ public static class TypeExtensions
     {
         return RuntimeHelpers.GetUninitializedObject(type);
     }
-
-    public static bool Implements(this Type type, Type subType)
-    {
-        if (type == subType) return true;
-        if (type.IsAssignableTo(subType)) return true;
-        throw new NotImplementedException();
-        return false;
-    }
-
-    public static bool Implements<TSub>(this Type type) => Implements(type, typeof(TSub));
+    
+    public static bool IsObjectArray(this Type type) => type == typeof(object[]);
 }

@@ -1,6 +1,4 @@
-﻿using System.Reflection.Emit;
-
-namespace Jayflect.Extensions;
+﻿namespace Jayflect.Extensions;
 
 public static class PropertyInfoExtensions
 {

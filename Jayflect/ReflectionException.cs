@@ -1,4 +1,4 @@
-﻿using Jayflect.Formatting;
+﻿using Jay.Dumping;
 
 namespace Jayflect;
 
@@ -8,7 +8,7 @@ namespace Jayflect;
 public class ReflectionException : Exception
 {
     public ReflectionException(
-        ref ReflectInterpolatedStringHandler message, 
+        ref DumpStringHandler message, 
         Exception? innerException = null)
         : base(message.ToStringAndClear(), innerException)
     {

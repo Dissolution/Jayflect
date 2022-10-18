@@ -26,6 +26,7 @@
     
     <ItemGroup>
       <ProjectReference Include="..\Jay.Core\Jay.Core.csproj" />
+      <ProjectReference Include="..\Jay.Dumping\Jay.Dumping.csproj" />
     </ItemGroup>
     
     

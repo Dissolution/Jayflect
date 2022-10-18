@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
+using Jay.Dumping;
 using Jayflect.Extensions;
-using Jayflect.Formatting;
 
 namespace Jayflect;
 
@@ -104,7 +104,7 @@ public static partial class Reflect
         if (methodArgs.Count != methodParams.Length)
             Debugger.Break();
 
-        ReflectInterpolatedStringHandler stringHandler = new();
+        DumpStringHandler stringHandler = new();
         stringHandler.AppendLiteral("Could not find ");
         stringHandler.AppendFormatted(typeof(TMember));
         stringHandler.AppendLiteral(":");

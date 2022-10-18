@@ -1,6 +1,4 @@
-﻿using Jay;
-
-namespace Jayflect.Extensions;
+﻿namespace Jayflect.Extensions;
 
 public static class MemberInfoExtensions
 {

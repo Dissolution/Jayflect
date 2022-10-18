@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleSandbox", "ConsoleSa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jay.Core", "Jay.Core\Jay.Core.csproj", "{E91052C6-3AE0-48DF-B079-FB81E743209A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jay.Dumping", "Jay.Dumping\Jay.Dumping.csproj", "{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{E91052C6-3AE0-48DF-B079-FB81E743209A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E91052C6-3AE0-48DF-B079-FB81E743209A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E91052C6-3AE0-48DF-B079-FB81E743209A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

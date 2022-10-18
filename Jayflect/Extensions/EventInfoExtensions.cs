@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Jayflect.Extensions;
+﻿namespace Jayflect.Extensions;
 
 public static class EventInfoExtensions
 {

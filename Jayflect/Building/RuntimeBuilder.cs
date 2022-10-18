@@ -1,42 +1,6 @@
-﻿using System.Reflection.Emit;
-using Jayflect.Extensions;
+﻿namespace Jayflect.Runtime;
 
-namespace Jayflect.Runtime;
 
-public record class DelegateSignature(Type ReturnType, Type[] ParameterTypes)
-{
-    public static DelegateSignature FromMethod(MethodBase method) => 
-        new(method.ReturnType(), method.GetParameterTypes());
-    public static DelegateSignature FromDelegate(Delegate @delegate) =>
-        FromMethod(@delegate.Method);
-    public static DelegateSignature FromDelegate<TDelegate>()
-        where TDelegate : Delegate =>
-        FromMethod(typeof(TDelegate).GetInvokeMethod()!);
-    public static DelegateSignature FromDelegateType(Type delegateType)
-    {
-        if (!delegateType.Implements<Delegate>())
-            throw new ArgumentException("You must pass a valid Delegate Type", nameof(delegateType));
-        return FromMethod(delegateType.GetInvokeMethod()!);
-    }
-}
-
-public class RuntimeMethodBuilder
-{
-    protected readonly DynamicMethod _dynamicMethod;
-
-    public string Name => _dynamicMethod.Name;
-    public MethodAttributes Attributes => _dynamicMethod.Attributes;
-    public CallingConventions CallingConventions => _dynamicMethod.CallingConvention;
-    public Type ReturnType => _dynamicMethod.ReturnType;
-    public Type[] ParameterTypes => _dynamicMethod.GetParameterTypes();
-    
-    public RuntimeMethodBuilder(DynamicMethod dynamicMethod)
-    {
-        _dynamicMethod = dynamicMethod;
-    }
-    
-    public Delegate CreateDelegate() => _dynamicMethod.CreateDelegate()
-}
 
 
 /// <summary>
@@ -54,7 +18,7 @@ public static class RuntimeBuilder
         ModuleBuilder = AssemblyBuilder.DefineDynamicModule($"{nameof(RuntimeBuilder)}_Module");
     }
     
-    internal static DynamicMethod CreateDynamicMethod(DelegateSignature signature, string? name = null)
+    public static DynamicMethod CreateDynamicMethod(DelegateSignature signature, string? name = null)
     {
         return new DynamicMethod(MemberNaming.CreateMemberName(MemberTypes.Method, name),
             MethodAttributes.Public | MethodAttributes.Static,
@@ -63,28 +27,40 @@ public static class RuntimeBuilder
             signature.ParameterTypes,
             ModuleBuilder,
             true);
-        
+    }
+
+    public static RuntimeDelegateBuilder CreateRuntimeDelegateBuilder(Type delegateType, string? name = null)
+    {
+        Validate.IsDelegateType(delegateType);
+        var dynamicMethod = CreateDynamicMethod(DelegateSignature.FromDelegateType(delegateType), name);
+        return new RuntimeDelegateBuilder(dynamicMethod, delegateType);
+    }
+    
+    public static RuntimeDelegateBuilder<TDelegate> CreateRuntimeDelegateBuilder<TDelegate>(string? name = null)
+        where TDelegate : Delegate
+    {
+        var dynamicMethod = CreateDynamicMethod(DelegateSignature.FromDelegate<TDelegate>(), name);
+        return new RuntimeDelegateBuilder<TDelegate>(dynamicMethod);
+    }
+
+    public static Delegate CreateDelegate(Type delegateType, string? name, Action<RuntimeDelegateBuilder> buildDelegate)
+    {
+        Validate.IsDelegateType(delegateType);
+        var runtimeDelegateBuilder = CreateRuntimeDelegateBuilder(delegateType, name);
+        buildDelegate(runtimeDelegateBuilder);
+        return runtimeDelegateBuilder.CreateDelegate();
+    }
+    
+    public static TDelegate CreateDelegate<TDelegate>(string? name, Action<RuntimeDelegateBuilder<TDelegate>> buildDelegate)
+        where TDelegate : Delegate
+    {
+        var runtimeDelegateBuilder = CreateRuntimeDelegateBuilder<TDelegate>(name);
+        buildDelegate(runtimeDelegateBuilder);
+        return runtimeDelegateBuilder.CreateDelegate();
     }
    
     /*
-    public static RuntimeMethod CreateRuntimeMethod(Type delegateType, string? name = null)
-    {
-        return new RuntimeMethod(CreateDynamicMethod(MethodSig.Of(delegateType), name), delegateType);
-    }
 
-    public static Delegate CreateDelegate(Type delegateType, Action<RuntimeMethod> buildDelegate)
-    {
-        return CreateDelegate(delegateType, null, buildDelegate);
-    }
-
-    public static Delegate CreateDelegate(Type delegateType, string? name, Action<RuntimeMethod> buildDelegate)
-    {
-        if (!delegateType.Implements<Delegate>())
-            throw new ArgumentException("Must be a delegate", nameof(delegateType));
-        var runtimeMethod = CreateRuntimeMethod(delegateType, name);
-        buildDelegate(runtimeMethod);
-        return runtimeMethod.CreateDelegate();
-    }
 
     public static Delegate CreateDelegate(Type delegateType, Action<IILGeneratorEmitter> emitDelegate)
     {
