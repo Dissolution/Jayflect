@@ -44,6 +44,11 @@
       <None Remove="Reflection\**" />
     </ItemGroup>
     
+    
+    <ItemGroup>
+      <Folder Include="Collections" />
+    </ItemGroup>
+    
 
 
 
