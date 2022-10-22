@@ -1,4 +1,4 @@
-﻿namespace Jay.Reflection.Building.Emission;
+﻿namespace Jayflect.Building.Emission.Instructions;
 
 public enum ILGeneratorMethod
 {

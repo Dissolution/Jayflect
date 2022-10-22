@@ -25,6 +25,14 @@ public static class DefaultInterpolatedStringHandlerExtensions
         if (value is not null) stringHandler.AppendFormatted<T>(value);
     }
 
+    public static void Write<T>(this ref DefStringHandler stringHandler, T? value, string? format)
+    {
+        if (value is not null)
+        {
+            stringHandler.AppendFormatted<T>(value, format);
+        }
+    }
+
     public static void Dump<T>(this ref DefStringHandler stringHandler, T? value, DumpFormat dumpFormat = default)
     {
         var dumper = DumperCache.GetDumper<T>();

@@ -1,6 +1,4 @@
-﻿using Jayflect.Runtime;
-
-namespace Jayflect.Caching;
+﻿namespace Jayflect.Caching;
 
 public sealed record class MemberDelegate(MemberInfo Member, DelegateSignature DelegateSignature)
 {

@@ -2,7 +2,7 @@
 
 public interface IDumpable
 {
-    string Dump(DumpFormat dumpFormat = default)
+    public string Dump(DumpFormat dumpFormat = default)
     {
         DefStringHandler stringHandler = new();
         DumpTo(ref stringHandler, dumpFormat);

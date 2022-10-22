@@ -1,12 +1,15 @@
 ﻿using System.Collections.Concurrent;
 
+// I use _ in 'constant' member names for readability
+// ReSharper disable InconsistentNaming
+
 namespace Jayflect.Caching;
 
 public static class MemberCache
 {
-    internal static class Constants
+    internal static class Methods
     {
-
+        public static MethodInfo Type_GetTypeFromHandle { get; } = Reflect.FindMember<MethodInfo>(() => Type.GetTypeFromHandle(default));
     }
     
     private static readonly ConcurrentDictionary<string, MemberInfo> _stringMemberCache = new();

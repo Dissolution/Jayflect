@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Jay.Collections;
 using Jay.Extensions;
 using Jay.Validation;
-using Jayflect.Collections;
 
 namespace Jay.Comparison;
 
@@ -41,8 +41,8 @@ public sealed class DefaultComparers : IEqualityComparer<object?>, IEqualityComp
     public static IEqualityComparer<T> Equality<T>()
     {
         return _equalityComparerCache.GetOrAdd<T>(_ => 
-                FindEqualityComparer<T>().AsValidInstanceOf<IEqualityComparer>())
-            .AsValidInstanceOf<IEqualityComparer<T>>();
+                FindEqualityComparer<T>().ValidateInstanceOf<IEqualityComparer>())
+            .ValidateInstanceOf<IEqualityComparer<T>>();
     }
 
     public static IEqualityComparer Equality(Type? type)
@@ -72,7 +72,7 @@ public sealed class DefaultComparers : IEqualityComparer<object?>, IEqualityComp
         if (IsEnumerable(typeof(T), out _))
         {
             return _equalityComparerCache.GetOrAdd(typeof(T), FindEqualityComparer)
-                .AsValidInstanceOf<IEqualityComparer<T>>();
+                .ValidateInstanceOf<IEqualityComparer<T>>();
         }
         
         return EqualityComparer<T>.Default;
@@ -89,13 +89,13 @@ public sealed class DefaultComparers : IEqualityComparer<object?>, IEqualityComp
                 .MakeGenericType(genericType)
                 .GetProperty("Default", BindingFlags.Public | BindingFlags.Static)!
                 .GetValue(null)
-                .AsValidInstanceOf<IEqualityComparer>();
+                .ValidateInstanceOf<IEqualityComparer>();
         }
 
         return typeof(EqualityComparer<>).MakeGenericType(type)
             .GetProperty("Default", BindingFlags.Public | BindingFlags.Static)!
             .GetValue(null)
-            .AsValidInstanceOf<IEqualityComparer>();
+            .ValidateInstanceOf<IEqualityComparer>();
     }
 
     

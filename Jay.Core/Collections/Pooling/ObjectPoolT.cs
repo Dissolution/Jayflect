@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 // ReSharper disable MethodOverloadWithOptionalParameter
 
-namespace Jay.Collections;
+namespace Jay.Collections.Pooling;
 
 /// <summary>
 /// A thread-safe pool of <typeparamref name="T"/> instances.

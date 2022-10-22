@@ -1,6 +1,6 @@
 ﻿using Jayflect.Extensions;
 
-namespace Jayflect.Runtime;
+namespace Jayflect;
 
 public record class DelegateSignature(Type ReturnType, Type[] ParameterTypes)
 {

@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Jay.Collections;
+namespace Jay.Collections.Pooling;
 
 public sealed class StringBuilderPool : ObjectPool<StringBuilder>
 {

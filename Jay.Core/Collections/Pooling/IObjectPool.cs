@@ -1,4 +1,4 @@
-﻿namespace Jay.Collections;
+﻿namespace Jay.Collections.Pooling;
 
 /// <summary>
 /// A pool of <typeparamref name="T"/> instances

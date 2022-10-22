@@ -1,4 +1,4 @@
-﻿namespace Jay.Collections;
+﻿namespace Jay.Collections.Pooling;
 
 internal class PoolInstance<T> : IPoolInstance<T>
     where T : class

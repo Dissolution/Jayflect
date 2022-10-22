@@ -1,7 +1,7 @@
-﻿namespace Jayflect.Runtime;
+﻿using Jay.Extensions;
+using Jayflect.Building.Emission;
 
-
-
+namespace Jayflect.Building;
 
 /// <summary>
 /// A runtime builder of <see cref="DynamicMethod"/>s and <see cref="Delegate"/>s
@@ -58,54 +58,31 @@ public static class RuntimeBuilder
         buildDelegate(runtimeDelegateBuilder);
         return runtimeDelegateBuilder.CreateDelegate();
     }
-   
-    /*
-
-
-    public static Delegate CreateDelegate(Type delegateType, Action<IILGeneratorEmitter> emitDelegate)
+    
+    public static Delegate CreateDelegate(Type delegateType, Action<FluentILGenerator> emitDelegate)
     {
         return CreateDelegate(delegateType, null, emitDelegate);
     }
 
-    public static Delegate CreateDelegate(Type delegateType, string? name, Action<IILGeneratorEmitter> emitDelegate)
+    public static Delegate CreateDelegate(Type delegateType, string? name, Action<FluentILGenerator> emitDelegate)
     {
         if (!delegateType.Implements<Delegate>())
             throw new ArgumentException("Must be a delegate", nameof(delegateType));
-        var runtimeMethod = CreateRuntimeMethod(delegateType, name);
+        var runtimeMethod = CreateRuntimeDelegateBuilder(delegateType, name);
         emitDelegate(runtimeMethod.Emitter);
         return runtimeMethod.CreateDelegate();
     }
-    
-    public static RuntimeMethod<TDelegate> CreateRuntimeMethod<TDelegate>(string? name = null)
-        where TDelegate : Delegate
-    {
-        return new RuntimeMethod<TDelegate>(CreateDynamicMethod(MethodSig.Of<TDelegate>(), name));
-    }
-    
-    public static TDelegate CreateDelegate<TDelegate>(Action<RuntimeMethod<TDelegate>> buildDelegate)
-        where TDelegate : Delegate
-    {
-        return CreateDelegate<TDelegate>(null, buildDelegate);
-    }
-    
-    public static TDelegate CreateDelegate<TDelegate>(Action<IILGeneratorEmitter> emitDelegate)
+
+    public static TDelegate CreateDelegate<TDelegate>(Action<FluentILGenerator> emitDelegate)
         where TDelegate : Delegate
     {
         return CreateDelegate<TDelegate>(null, emitDelegate);
     }
 
-    public static TDelegate CreateDelegate<TDelegate>(string? name, Action<RuntimeMethod<TDelegate>> buildDelegate)
+    public static TDelegate CreateDelegate<TDelegate>(string? name, Action<FluentILGenerator> emitDelegate)
         where TDelegate : Delegate
     {
-        var runtimeMethod = CreateRuntimeMethod<TDelegate>(name);
-        buildDelegate(runtimeMethod);
-        return runtimeMethod.CreateDelegate();
-    }
-    
-    public static TDelegate CreateDelegate<TDelegate>(string? name, Action<IILGeneratorEmitter> emitDelegate)
-        where TDelegate : Delegate
-    {
-        var runtimeMethod = CreateRuntimeMethod<TDelegate>(name);
+        var runtimeMethod = CreateRuntimeDelegateBuilder<TDelegate>(name);
         emitDelegate(runtimeMethod.Emitter);
         return runtimeMethod.CreateDelegate();
     }
@@ -113,7 +90,7 @@ public static class RuntimeBuilder
     public static TypeBuilder DefineType(TypeAttributes typeAttributes, string? name = null)
     {
         return ModuleBuilder.DefineType(
-            MemberNaming.CreateMemberName(name),
+            MemberNaming.CreateMemberName(MemberTypes.TypeInfo, name),
             typeAttributes, 
             typeof(RuntimeBuilder));
     }
@@ -121,30 +98,25 @@ public static class RuntimeBuilder
     public static CustomAttributeBuilder GetCustomAttributeBuilder<TAttribute>()
         where TAttribute : Attribute, new()
     {
-        var ctor = typeof(TAttribute).GetConstructor(Reflect.InstanceFlags, Type.EmptyTypes);
+        var ctor = typeof(TAttribute).GetConstructor(Reflect.Flags.Instance, Type.EmptyTypes);
         if (ctor is null)
-            Dumper.ThrowException<InvalidOperationException>($"Cannot find an empty {typeof(TAttribute)} constructor.");
+            throw new InvalidOperationException(Dump($"Cannot find an empty {typeof(TAttribute)} constructor."));
         return new CustomAttributeBuilder(ctor, Array.Empty<object>());
     }
 
-    public static CustomAttributeBuilder GetCustomAttributeBuilder<TAttribute>(params object?[] ctorArgs)
+    public static CustomAttributeBuilder GetCustomAttributeBuilder<TAttribute>(params object[] ctorArgs)
         where TAttribute : Attribute
     {
-        var ctor = MemberSearch.FindBestConstructor(typeof(TAttribute), Reflect.InstanceFlags, ctorArgs);
-        if (ctor is null)
-            Dumper.ThrowException<InvalidOperationException>($"Cannot find a {typeof(TAttribute)} constructor that matches {ctorArgs}");
+        var ctor = Reflect.FindConstructor(typeof(TAttribute), ctorArgs);
         return new CustomAttributeBuilder(ctor, ctorArgs);
     }
 
-    public static CustomAttributeBuilder GetCustomAttributeBuilder(Type attributeType, params object?[] ctorArgs)
+    public static CustomAttributeBuilder GetCustomAttributeBuilder(Type attributeType, params object[] ctorArgs)
     {
         if (!attributeType.Implements<Attribute>())
-            Dumper.ThrowException<ArgumentException>($"{attributeType} is not an Attribute");
-        var ctor = MemberSearch.FindBestConstructor(attributeType, Reflect.InstanceFlags, ctorArgs);
-        if (ctor is null)
-            Dumper.ThrowException<InvalidOperationException>($"Cannot find a {attributeType} constructor that matches {ctorArgs}");
+            throw new ArgumentException(Dump($"{attributeType} is not an Attribute"));
+        var ctor = Reflect.FindConstructor(attributeType, ctorArgs);
         return new CustomAttributeBuilder(ctor, ctorArgs);
     }
-    */
 }
 

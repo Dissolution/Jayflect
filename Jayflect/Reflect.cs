@@ -137,12 +137,22 @@ public static partial class Reflect
 
     public static ConstructorInfo FindConstructor<T>(params Type[] ctorParameterTypes)
     {
-        ConstructorInfo? constructor = typeof(T)
+        return FindConstructor(typeof(T), ctorParameterTypes);
+    }
+
+    public static ConstructorInfo FindConstructor(Type instanceType, params object[] arguments)
+    {
+        return FindConstructor(instanceType, Array.ConvertAll(arguments, arg => arg.GetType()));
+    }
+    
+    public static ConstructorInfo FindConstructor(Type instanceType, params Type[] argTypes)
+    {
+        ConstructorInfo? constructor = instanceType
             .GetConstructors(Flags.Instance)
-            .FirstOrDefault(ctor => MemoryExtensions.SequenceEqual<Type>(ctor.GetParameterTypes(), ctorParameterTypes));
+            .FirstOrDefault(ctor => MemoryExtensions.SequenceEqual<Type>(ctor.GetParameterTypes(), argTypes));
         if (constructor is not null)
             return constructor;
-        throw new ReflectionException($"Could not find constructor that matched {typeof(T)}({ctorParameterTypes})");
+        throw new ReflectionException($"Could not find constructor that matched {instanceType}({argTypes})");
     }
 }
 

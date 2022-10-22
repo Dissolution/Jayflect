@@ -1,4 +1,4 @@
-﻿namespace Jay;
+﻿namespace Jay.Utilities;
 
 public static class Constraints
 {

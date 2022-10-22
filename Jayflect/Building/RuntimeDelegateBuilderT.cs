@@ -1,4 +1,4 @@
-﻿namespace Jayflect.Runtime;
+﻿namespace Jayflect.Building;
 
 public class RuntimeDelegateBuilder<TDelegate> : RuntimeDelegateBuilder
     where TDelegate : Delegate

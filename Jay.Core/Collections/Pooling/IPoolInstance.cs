@@ -1,4 +1,4 @@
-﻿namespace Jay.Collections;
+﻿namespace Jay.Collections.Pooling;
 
 /// <summary>
 /// An <see cref="IDisposable"/> that returns a <typeparamref name="T"/> instance value to its source <see cref="IObjectPool{T}"/> when it is disposed.

@@ -1,16 +1,12 @@
-﻿using System.Reflection;
-using System.Reflection.Emit;
+﻿using Jay.Extensions;
+using Jayflect.Caching;
 
-// ReSharper disable IdentifierTypo
-// ReSharper disable UnusedMember.Global
-// ReSharper disable CommentTypo
+namespace Jayflect.Building.Emission;
 
-namespace Jay.Reflection.Building.Emission;
-
-public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
-    where TEmitter : class, IOpEmitter<TEmitter>
+public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFluentOpCodeEmitter<TEmitter>
+    where TEmitter : IFluentILEmitter<TEmitter>
 {
-    #region Try/Catch/Finally
+#region Try/Catch/Finally
     /// <summary>
     /// Transfers control from the filter clause of an exception back to the Common Language Infrastructure (CLI) exception handler.
     /// </summary>
@@ -29,11 +25,127 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.endfinally"/>
     TEmitter Endfinally() => Emit(OpCodes.Endfinally);
+
+
+    //ITryCatchFinallyEmitter<TEmitter> Try(Action<TEmitter> tryBlock);
+    #endregion
+
+
+    #region Arguments
+    /// <summary>
+    /// Returns an unmanaged pointer to the argument list of the current method.
+    /// </summary>
+    /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.arglist?view=netcore-3.0"/>
+    TEmitter Arglist() => Emit(OpCodes.Arglist);
+
+    #region Ldarg
+    /// <summary>
+    /// Loads the argument with the specified <paramref name="index"/> onto the stack.
+    /// </summary>
+    /// <param name="index">The index of the argument to load.</param>
+    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg"/>
+    public TEmitter Ldarg(int index)
+    {
+        if (index < 0 || index > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(index), index, $"Argument index must be between 0 and {short.MaxValue}");
+        if (index == 0)
+            return Emit(OpCodes.Ldarg_0);
+        if (index == 1)
+            return Emit(OpCodes.Ldarg_1);
+        if (index == 2)
+            return Emit(OpCodes.Ldarg_2);
+        if (index == 3)
+            return Emit(OpCodes.Ldarg_3);
+        if (index <= byte.MaxValue)
+            return Emit(OpCodes.Ldarg_S, (byte)index);
+        return Emit(OpCodes.Ldarg, (short)index);
+    }
+
+    TEmitter Ldarg(ParameterInfo parameter) => Ldarg(parameter.Position);
+
+
+    /// <summary>
+    /// Loads the argument with the specified short-form <paramref name="index"/> onto the stack.
+    /// </summary>
+    /// <param name="index">The short-form index of the argument to load.</param>
+    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_s"/>
+    TEmitter Ldarg_S(int index) => Ldarg(index);
+
+    /// <summary>
+    /// Loads the argument at index 0 onto the stack.
+    /// </summary>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_0"/>
+    TEmitter Ldarg_0() => Emit(OpCodes.Ldarg_0);
+
+    /// <summary>
+    /// Loads the argument at index 1 onto the stack.
+    /// </summary>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_1"/>
+    TEmitter Ldarg_1() => Emit(OpCodes.Ldarg_1);
+
+    /// <summary>
+    /// Loads the argument at index 2 onto the stack.
+    /// </summary>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_2"/>
+    TEmitter Ldarg_2() => Emit(OpCodes.Ldarg_2);
+
+    /// <summary>
+    /// Loads the argument at index 3 onto the stack.
+    /// </summary>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_3"/>
+    TEmitter Ldarg_3() => Emit(OpCodes.Ldarg_3);
+
+    /// <summary>
+    /// Loads the address of the argument with the specified <paramref name="index"/> onto the stack.
+    /// </summary>
+    /// <param name="index">The index of the argument address to load.</param>
+    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarga"/>
+    TEmitter Ldarga(int index)
+    {
+        if (index < 0 || index > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(index), index, $"Argument index must be between 0 and {short.MaxValue}");
+        if (index <= byte.MaxValue)
+            return Emit(OpCodes.Ldarga_S, (byte)index);
+        return Emit(OpCodes.Ldarga, (short)index);
+    }
+
+    /// <summary>
+    /// Loads the address of the argument with the specified short-form <paramref name="index"/> onto the stack.
+    /// </summary>
+    /// <param name="index">The short-form index of the argument address to load.</param>
+    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarga_s"/>
+    TEmitter Ldarga_S(int index) => Ldarga(index);
+    #endregion
+    #region Starg
+    /// <summary>
+    /// Stores the value on top of the stack in the argument at the given <paramref name="index"/>.
+    /// </summary>
+    /// <param name="index">The index of the argument.</param>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.starg"/>
+    TEmitter Starg(int index)
+    {
+        if (index < 0 || index > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(index), index, $"Argument index must be between 0 and {short.MaxValue}");
+        if (index <= byte.MaxValue)
+            return Emit(OpCodes.Starg_S, (byte)index);
+        return Emit(OpCodes.Starg, (short)index);
+    }
+
+    /// <summary>
+    /// Stores the value on top of the stack in the argument at the given short-form <paramref name="index"/>.
+    /// </summary>
+    /// <param name="index">The short-form index of the argument.</param>
+    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.starg_s"/>
+    TEmitter Starg_S(int index) => Starg(index);
+    #endregion
     #endregion
 
     #region Locals
     #region Load
-
     /// <summary>
     /// Loads the given <see cref="LocalBuilder"/>'s value onto the stack.
     /// </summary>
@@ -54,7 +166,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
                 return Emit(OpCodes.Ldloc_3);
             default:
             {
-                if (local.IsShort())
+                if (local.IsShortForm())
                     return Emit(OpCodes.Ldloc_S, local);
                 return Emit(OpCodes.Ldloc, local);
             }
@@ -100,7 +212,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     TEmitter Ldloca(LocalBuilder local)
     {
         ArgumentNullException.ThrowIfNull(local);
-        if (local.IsShort())
+        if (local.IsShortForm())
             return Emit(OpCodes.Ldloca_S, local);
         return Emit(OpCodes.Ldloca, local);
     }
@@ -113,7 +225,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     TEmitter Ldloca_S(LocalBuilder local)
     {
         ArgumentNullException.ThrowIfNull(local);
-        if (local.IsShort())
+        if (local.IsShortForm())
             return Emit(OpCodes.Ldloca_S, local);
         return Emit(OpCodes.Ldloca, local);
     }
@@ -141,7 +253,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
                 return Emit(OpCodes.Stloc_3);
             default:
             {
-                if (local.IsShort())
+                if (local.IsShortForm())
                     return Emit(OpCodes.Stloc_S, local);
                 return Emit(OpCodes.Stloc, local);
             }
@@ -194,6 +306,9 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
             throw new ArgumentNullException(nameof(labels));
         return Emit(OpCodes.Switch, labels);
     }
+
+    TEmitter DefineAndMarkLabel(out Label label, [CallerArgumentExpression("label")] string lblName = "")
+        => DefineLabel(out label, lblName).MarkLabel(label);
     #endregion
 
     #region Method Related (Call)
@@ -209,20 +324,13 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
         ArgumentNullException.ThrowIfNull(method);
         return Emit(method.GetCallOpCode(), method);
 
-        /* Have to figure out exactly what methods can be safely called versus callvirted
-     * ~~Also need to figure out how to let them be specific (override guessing) because either can be used for either in specific cases (see doc)~~
-     * Solved by Emit(OpCodes.Call/Virt, method) directly
-     *
-     * Callvirt calls a late-bound method on an object, eg method chosen on runtime type of obj rather than compile-time class visible in method pointer. Can be used for virtual and instance methods
-     * Call instruction calls the method indicated by the method descriptor passed with the instruction. The method descriptor is a metadata token that indicates the method to call and the number, type, and order of args on the stack and calling conventions
-     *
-     * TO  DO:
-     * Note :
-     * When calling methods of System.Object on value types, consider using the constrained prefix with the callvirt instruction instead of emitting a call instruction.
-     * This removes the need to emit different IL depending on whether or not the value type overrides the method, avoiding a potential versioning problem.
-     * Consider using the constrained prefix when invoking interface methods on value types, since the value type method implementing the interface method can be changed using a MethodImpl.
-     * These issues are described in more detail in the Constrained opcode.
-     */
+        /* TO  DO:
+         * Note :
+         * When calling methods of System.Object on value types, consider using the constrained prefix with the callvirt instruction instead of emitting a call instruction.
+         * This removes the need to emit different IL depending on whether or not the value type overrides the method, avoiding a potential versioning problem.
+         * Consider using the constrained prefix when invoking interface methods on value types, since the value type method implementing the interface method can be changed using a MethodImpl.
+         * These issues are described in more detail in the Constrained opcode.
+         */
     }
 
     /// <summary>
@@ -377,6 +485,31 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="NullReferenceException">If the <see cref="Exception"/> <see cref="object"/> on the stack is <see langword="null"/>.</exception>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.throw"/>
     TEmitter Throw() => Emit(OpCodes.Throw);
+
+    TEmitter ThrowException(Type exceptionType)
+    {
+        ArgumentNullException.ThrowIfNull(exceptionType);
+        if (!exceptionType.Implements<Exception>())
+            throw new ArgumentException("Invalid Exception Type", nameof(exceptionType));
+        var ctor = exceptionType.GetConstructor(Reflect.Flags.Instance, Type.EmptyTypes);
+        if (ctor is not null)
+        {
+            return Newobj(ctor).Throw();
+        }
+        else
+        {
+            //return LoadUninitialized(exceptionType).Throw();
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Emits the instructions to throw an <see cref="Exception"/>.
+    /// </summary>
+    /// <typeparam name="TException">The <see cref="Type"/> of <see cref="Exception"/> to throw.</typeparam>
+    /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.throwexception?view=netcore-3.0"/>
+    TEmitter ThrowException<TException>()
+        where TException : Exception, new() => ThrowException(typeof(TException));
     #endregion
 
     #region Math
@@ -512,117 +645,6 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     TEmitter Xor() => Emit(OpCodes.Xor);
     #endregion
 
-    #region Arguments
-    /// <summary>
-    /// Returns an unmanaged pointer to the argument list of the current method.
-    /// </summary>
-    /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.arglist?view=netcore-3.0"/>
-    TEmitter Arglist() => Emit(OpCodes.Arglist);
-
-    #region Ldarg
-    /// <summary>
-    /// Loads the argument with the specified <paramref name="index"/> onto the stack.
-    /// </summary>
-    /// <param name="index">The index of the argument to load.</param>
-    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg"/>
-    public TEmitter Ldarg(int index)
-    {
-        if (index < 0 || index > short.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(index), index, $"Argument index must be between 0 and {short.MaxValue}");
-        if (index == 0)
-            return Emit(OpCodes.Ldarg_0);
-        if (index == 1)
-            return Emit(OpCodes.Ldarg_1);
-        if (index == 2)
-            return Emit(OpCodes.Ldarg_2);
-        if (index == 3)
-            return Emit(OpCodes.Ldarg_3);
-        if (index <= byte.MaxValue)
-            return Emit(OpCodes.Ldarg_S, (byte)index);
-        return Emit(OpCodes.Ldarg, (short)index);
-    }
-
-    /// <summary>
-    /// Loads the argument with the specified short-form <paramref name="index"/> onto the stack.
-    /// </summary>
-    /// <param name="index">The short-form index of the argument to load.</param>
-    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_s"/>
-    TEmitter Ldarg_S(int index) => Ldarg(index);
-
-    /// <summary>
-    /// Loads the argument at index 0 onto the stack.
-    /// </summary>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_0"/>
-    TEmitter Ldarg_0() => Emit(OpCodes.Ldarg_0);
-
-    /// <summary>
-    /// Loads the argument at index 1 onto the stack.
-    /// </summary>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_1"/>
-    TEmitter Ldarg_1() => Emit(OpCodes.Ldarg_1);
-
-    /// <summary>
-    /// Loads the argument at index 2 onto the stack.
-    /// </summary>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_2"/>
-    TEmitter Ldarg_2() => Emit(OpCodes.Ldarg_2);
-
-    /// <summary>
-    /// Loads the argument at index 3 onto the stack.
-    /// </summary>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarg_3"/>
-    TEmitter Ldarg_3() => Emit(OpCodes.Ldarg_3);
-
-    /// <summary>
-    /// Loads the address of the argument with the specified <paramref name="index"/> onto the stack.
-    /// </summary>
-    /// <param name="index">The index of the argument address to load.</param>
-    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarga"/>
-    TEmitter Ldarga(int index)
-    {
-        if (index < 0 || index > short.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(index), index, $"Argument index must be between 0 and {short.MaxValue}");
-        if (index <= byte.MaxValue)
-            return Emit(OpCodes.Ldarga_S, (byte)index);
-        return Emit(OpCodes.Ldarga, (short)index);
-    }
-
-    /// <summary>
-    /// Loads the address of the argument with the specified short-form <paramref name="index"/> onto the stack.
-    /// </summary>
-    /// <param name="index">The short-form index of the argument address to load.</param>
-    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarga_s"/>
-    TEmitter Ldarga_S(int index) => Ldarga(index);
-    #endregion
-    #region Starg
-    /// <summary>
-    /// Stores the value on top of the stack in the argument at the given <paramref name="index"/>.
-    /// </summary>
-    /// <param name="index">The index of the argument.</param>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.starg"/>
-    TEmitter Starg(int index)
-    {
-        if (index < 0 || index > short.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(index), index, $"Argument index must be between 0 and {short.MaxValue}");
-        if (index <= byte.MaxValue)
-            return Emit(OpCodes.Starg_S, (byte)index);
-        return Emit(OpCodes.Starg, (short)index);
-    }
-
-    /// <summary>
-    /// Stores the value on top of the stack in the argument at the given short-form <paramref name="index"/>.
-    /// </summary>
-    /// <param name="index">The short-form index of the argument.</param>
-    /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.starg_s"/>
-    TEmitter Starg_S(int index) => Starg(index);
-    #endregion
-
-    #endregion
-
     #region Branching
     #region Unconditional
     /// <summary>
@@ -633,7 +655,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.br_s?view=netcore-3.0"/>
     TEmitter Br(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Br_S, label);
         return Emit(OpCodes.Br, label);
     }
@@ -645,6 +667,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.br_s?view=netcore-3.0"/>
     TEmitter Br_S(Label label) => Br(label);
+
+    TEmitter Br(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Br(label);
 
     /// <summary>
     /// Exits the current method and jumps to the given <see cref="MethodInfo"/>.
@@ -666,7 +690,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.leave_s"/>
     TEmitter Leave(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Leave_S, label);
         return Emit(OpCodes.Leave, label);
     }
@@ -679,11 +703,14 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.leave_s"/>
     TEmitter Leave_S(Label label) => Leave(label);
 
+    TEmitter Leave(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Leave(label);
+
     /// <summary>
     /// Returns from the current method, pushing a return value (if present) from the callee's evaluation stack onto the caller's evaluation stack.
     /// </summary>
     TEmitter Ret() => Emit(OpCodes.Ret);
     #endregion
+
     #region True
     /// <summary>
     /// Transfers control to the given <see cref="Label"/> if value is <see langword="true"/>, not-<see langword="null"/>, or non-zero.
@@ -693,7 +720,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brtrue_s?view=netcore-3.0"/>
     TEmitter Brtrue(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Brtrue_S, label);
         return Emit(OpCodes.Brtrue, label);
     }
@@ -705,6 +732,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brtrue_s?view=netcore-3.0"/>
     TEmitter Brtrue_S(Label label) => Brtrue(label);
+
+    TEmitter Brtrue(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Brtrue(label);
     #endregion
     #region False
     /// <summary>
@@ -715,7 +744,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brfalse_s?view=netcore-3.0"/>
     TEmitter Brfalse(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Brfalse_S, label);
         return Emit(OpCodes.Brfalse, label);
     }
@@ -727,6 +756,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brfalse_s?view=netcore-3.0"/>
     TEmitter Brfalse_S(Label label) => Brfalse(label);
+
+    TEmitter Brfalse(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Brfalse(label);
     #endregion
     #region ==
     /// <summary>
@@ -737,7 +768,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.beq_s?view=netcore-3.0"/>
     TEmitter Beq(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Beq_S, label);
         return Emit(OpCodes.Beq, label);
     }
@@ -749,6 +780,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.beq_s?view=netcore-3.0"/>
     TEmitter Beq_S(Label label) => Beq(label);
+
+    TEmitter Beq(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Beq(label);
     #endregion
     #region !=
     /// <summary>
@@ -759,7 +792,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bne_un_s?view=netcore-3.0"/>
     TEmitter Bne_Un(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Bne_Un_S, label);
         return Emit(OpCodes.Bne_Un, label);
     }
@@ -771,6 +804,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bne_un_s?view=netcore-3.0"/>
     TEmitter Bne_Un_S(Label label) => Bne_Un(label);
+
+    TEmitter Bne_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bne_Un(label);
     #endregion
     #region >=
     /// <summary>
@@ -781,7 +816,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_s?view=netcore-3.0"/>
     TEmitter Bge(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Bge_S, label);
         return Emit(OpCodes.Bge, label);
     }
@@ -794,6 +829,9 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_s?view=netcore-3.0"/>
     TEmitter Bge_S(Label label) => Bge(label);
 
+    TEmitter Bge(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bge(label);
+
+
     /// <summary>
     /// Transfers control to the given <see cref="Label"/> if the first value is greater than or equal to (<see langword="&gt;="/>) the second value when comparing unsigned integer values or unordered float values.
     /// </summary>
@@ -802,7 +840,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_un_s?view=netcore-3.0"/>
     TEmitter Bge_Un(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Bge_Un_S, label);
         return Emit(OpCodes.Bge_Un, label);
     }
@@ -814,6 +852,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_un_s?view=netcore-3.0"/>
     TEmitter Bge_Un_S(Label label) => Bge_Un(label);
+
+    TEmitter Bge_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bge_Un(label);
     #endregion
     #region >
     /// <summary>
@@ -824,7 +864,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_s?view=netcore-3.0"/>
     TEmitter Bgt(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Bgt_S, label);
         return Emit(OpCodes.Bgt, label);
     }
@@ -837,6 +877,9 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_s?view=netcore-3.0"/>
     TEmitter Bgt_S(Label label) => Bgt(label);
 
+    TEmitter Bgt(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bgt(label);
+
+
     /// <summary>
     /// Transfers control to the given <see cref="Label"/> if the first value is greater than (<see langword="&gt;"/>) the second value when comparing unsigned integer values or unordered float values.
     /// </summary>
@@ -845,7 +888,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_un_s?view=netcore-3.0"/>
     TEmitter Bgt_Un(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Bgt_Un_S, label);
         return Emit(OpCodes.Bgt_Un, label);
     }
@@ -857,6 +900,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_un_s?view=netcore-3.0"/>
     TEmitter Bgt_Un_S(Label label) => Bgt_Un(label);
+
+    TEmitter Bgt_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bgt_Un(label);
     #endregion
     #region <=
     /// <summary>
@@ -867,7 +912,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_s?view=netcore-3.0"/>
     TEmitter Ble(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Ble_S, label);
         return Emit(OpCodes.Ble, label);
     }
@@ -880,6 +925,9 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_s?view=netcore-3.0"/>
     TEmitter Ble_S(Label label) => Ble(label);
 
+    TEmitter Ble(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Ble(label);
+
+
     /// <summary>
     /// Transfers control to the given <see cref="Label"/> if the first value is less than or equal to (<see langword="&lt;="/>) the second value when comparing unsigned integer values or unordered float values.
     /// </summary>
@@ -888,7 +936,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_un_s?view=netcore-3.0"/>
     TEmitter Ble_Un(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Ble_Un_S, label);
         return Emit(OpCodes.Ble_Un, label);
     }
@@ -900,6 +948,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_un_s?view=netcore-3.0"/>
     TEmitter Ble_Un_S(Label label) => Ble_Un(label);
+
+    TEmitter Ble_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Ble_Un(label);
     #endregion
     #region <
     /// <summary>
@@ -910,7 +960,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_s?view=netcore-3.0"/>
     TEmitter Blt(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Blt_S, label);
         return Emit(OpCodes.Blt, label);
     }
@@ -923,6 +973,9 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_s?view=netcore-3.0"/>
     TEmitter Blt_S(Label label) => Blt(label);
 
+    TEmitter Blt(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Blt(label);
+
+
     /// <summary>
     /// Transfers control to the given <see cref="Label"/> if the first value is less than (<see langword="&lt;"/>) the second value when comparing unsigned integer values or unordered float values.
     /// </summary>
@@ -931,7 +984,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_un_s?view=netcore-3.0"/>
     TEmitter Blt_Un(Label label)
     {
-        if (label.IsShort())
+        if (label.IsShortForm())
             return Emit(OpCodes.Blt_Un_S, label);
         return Emit(OpCodes.Blt_Un, label);
     }
@@ -944,8 +997,8 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_un_s?view=netcore-3.0"/>
     TEmitter Blt_Un_S(Label label) => Blt_Un(label);
 
+    TEmitter Blt_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Blt_Un(label);
     #endregion
-
     #endregion
 
     #region Boxing / Unboxing / Casting
@@ -976,7 +1029,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.unbox"/>
     TEmitter Unbox(Type valueType)
     {
-        EmitValidation.IsValue(valueType);
+        Validate.IsValueType(valueType);
         return Emit(OpCodes.Unbox, valueType);
     }
 
@@ -1016,7 +1069,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.castclass"/>
     TEmitter Castclass(Type classType)
     {
-        EmitValidation.IsClass(classType);
+        Validate.IsClassOrInterfaceType(classType);
         return Emit(OpCodes.Castclass, classType);
     }
 
@@ -1283,6 +1336,12 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.cgt_un?view=netcore-3.0"/>
     TEmitter Cgt_Un() => Emit(OpCodes.Cgt_Un);
 
+    TEmitter Cge() => Clt().Not();
+
+    TEmitter Cge_Un() => Clt_Un().Not();
+
+
+
     /// <summary>
     /// Compares two values. If the first value is less than (<see langword="&lt;"/>) the second, (<see cref="int"/>)1 is pushed onto the evaluation stack; otherwise (<see cref="int"/>)0 is pushed onto the evaluation stack.
     /// </summary>
@@ -1294,6 +1353,10 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// </summary>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.clt_un?view=netcore-3.0"/>
     TEmitter Clt_Un() => Emit(OpCodes.Clt_Un);
+
+    TEmitter Cle() => Cgt().Not();
+
+    TEmitter Cle_Un() => Cgt_Un().Not();
     #endregion
 
     #region byte*  /  byte[]  /  ref byte
@@ -1326,7 +1389,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.cpobj"/>
     TEmitter Cpobj(Type valueType)
     {
-        EmitValidation.IsValue(valueType);
+        Validate.IsValueType(valueType);
         return Emit(OpCodes.Cpobj, valueType);
     }
 
@@ -1356,7 +1419,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.initobj"/>
     TEmitter Initobj(Type valueType)
     {
-        EmitValidation.IsValue(valueType);
+        Validate.IsValueType(valueType);
         return Emit(OpCodes.Initobj, valueType);
     }
 
@@ -1391,7 +1454,6 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     #endregion
 
     #region Load Value
-
     #region LoaD Constant (LDC)
     /// <summary>
     /// Pushes the given <see cref="int"/> onto the stack.
@@ -1564,6 +1626,72 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
         return Emit(OpCodes.Ldtoken, method);
     }
     #endregion
+
+    /// <summary>
+    /// Loads the given <paramref name="value"/> onto the stack
+    /// </summary>
+    /// <param name="value"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    TEmitter LoadValue<T>(T value)
+    {
+        if (value is null)
+            return Ldnull();
+        if (value is bool boolean)
+            return boolean ? Ldc_I4_1() : Ldc_I4_0();
+        if (value is byte b)
+            return Ldc_I4(b);
+        if (value is sbyte sb)
+            return Ldc_I4(sb);
+        if (value is short s)
+            return Ldc_I4(s);
+        if (value is ushort us)
+            return Ldc_I4(us);
+        if (value is int i)
+            return Ldc_I4(i);
+        if (value is uint ui)
+            return Ldc_I8(ui);
+        if (value is long l)
+            return Ldc_I8(l);
+        if (value is ulong ul)
+            return Ldc_I8((long)ul);
+        if (value is float f)
+            return Ldc_R4(f);
+        if (value is double d)
+            return Ldc_R8(d);
+        if (value is string str)
+            return Ldstr(str);
+        if (value is Type type)
+            return LoadType(type);
+        if (value is LocalBuilder local)
+            return Ldloc(local);
+
+        throw new NotImplementedException();
+    }
+
+    TEmitter LoadType(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+        return Ldtoken(type).Call(MemberCache.Methods.Type_GetTypeFromHandle);
+    }
+    TEmitter LoadType<T>() => LoadType(typeof(T));
+
+
+    TEmitter LoadDefault(Type type)
+    {
+        if (type.IsValueType)
+        {
+            // Can I just ldc_i4_0 and conv?
+
+            return DeclareLocal(type, out var defaultValue)
+                .Ldloca(defaultValue)
+                .Initobj(type)
+                .Ldloc(defaultValue);
+        }
+        return Ldnull();
+    }
+    TEmitter LoadDefault<T>() => LoadDefault(typeof(T));
     #endregion
 
     #region Arrays
@@ -2294,7 +2422,7 @@ public interface IOpEmitter<out TEmitter> : IILGenerator<TEmitter>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.sizeof"/>
     TEmitter Sizeof(Type type)
     {
-        EmitValidation.IsValue(type);
+        Validate.IsValueType(type);
         return Emit(OpCodes.Sizeof, type);
     }
 

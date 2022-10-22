@@ -1,4 +1,6 @@
-﻿namespace Jay.Collections;
+﻿using Jay.Utilities;
+
+namespace Jay.Collections.Pooling;
 
 public static class Pool
 {

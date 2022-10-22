@@ -1,7 +1,8 @@
-﻿namespace Jay.Reflection.Building.Emission;
+﻿
+namespace Jayflect.Building.Emission;
 
 public interface ITryCatchFinallyEmitter<out TEmitter> 
-    where TEmitter : class, IFluentEmitter<TEmitter>
+    where TEmitter : IFluentILEmitter<TEmitter>
 {
     TEmitter EndTry { get; }
     

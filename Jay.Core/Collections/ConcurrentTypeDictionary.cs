@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Jayflect.Collections;
+namespace Jay.Collections;
 
 /// <summary>
 /// A <see cref="ConcurrentDictionary{TKey,TValue}"/> of <see cref="Type"/> and <typeparamref name="TValue"/>

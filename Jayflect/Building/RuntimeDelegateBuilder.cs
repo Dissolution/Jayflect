@@ -1,9 +1,12 @@
-﻿namespace Jayflect.Runtime;
+﻿using Jayflect.Building.Emission;
+
+namespace Jayflect.Building;
 
 public class RuntimeDelegateBuilder
 {
     protected readonly DynamicMethod _dynamicMethod;
     protected readonly Type _delegateType;
+    private FluentILGenerator? _emitter = null;
 
     public string Name => _dynamicMethod.Name;
     public MethodAttributes Attributes => _dynamicMethod.Attributes;
@@ -13,7 +16,9 @@ public class RuntimeDelegateBuilder
     public Type[] ParameterTypes { get; }
 
     public ILGenerator IlGenerator => _dynamicMethod.GetILGenerator();
-    
+
+    public FluentILGenerator Emitter => _emitter ??= new(IlGenerator);
+
     internal RuntimeDelegateBuilder(DynamicMethod dynamicMethod, Type delegateType)
     {
         Validate.IsDelegateType(delegateType);

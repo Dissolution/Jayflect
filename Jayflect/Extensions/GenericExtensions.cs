@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using Jayflect.Collections;
+using Jay.Collections;
 
 namespace Jayflect.Extensions;
 
