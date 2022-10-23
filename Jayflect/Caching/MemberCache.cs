@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Jayflect.Exceptions;
 
 // I use _ in 'constant' member names for readability
 // ReSharper disable InconsistentNaming

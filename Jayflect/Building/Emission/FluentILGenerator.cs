@@ -6,7 +6,7 @@ using Jayflect.Building.Emission.Instructions;
 
 namespace Jayflect.Building.Emission;
 
-public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
+public sealed class FluentILGenerator : IFluentILEmitter
 {
     private readonly ILGenerator _ilGenerator;
     private readonly List<EmitterLabel> _labels;
@@ -86,11 +86,11 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         this.Instructions.AddLast(line);
     }
 
-    private sealed class TryCatchFinallyEmitter : ITryCatchFinallyEmitter<FluentILGenerator>
+    private sealed class TryCatchFinallyEmitter : ITryCatchFinallyEmitter<IFluentILEmitter>
     {
         private readonly FluentILGenerator _emitter;
 
-        public FluentILGenerator EndTry
+        public IFluentILEmitter EndTry
         {
             get
             {
@@ -104,20 +104,20 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
             _emitter = emitter;
         }
 
-        public void Try(Action<FluentILGenerator> tryBlock)
+        public void Try(Action<IFluentILEmitter> tryBlock)
         {
             _emitter.BeginExceptionBlock(out _);
             tryBlock(_emitter);
         }
 
-        public ITryCatchFinallyEmitter<FluentILGenerator> Catch(Type exceptionType, Action<FluentILGenerator> catchBlock)
+        public ITryCatchFinallyEmitter<IFluentILEmitter> Catch(Type exceptionType, Action<IFluentILEmitter> catchBlock)
         {
             _emitter.BeginCatchBlock(exceptionType);
             catchBlock(_emitter);
             return this;
         }
 
-        public FluentILGenerator Finally(Action<FluentILGenerator> finallyBlock)
+        public IFluentILEmitter Finally(Action<IFluentILEmitter> finallyBlock)
         {
             _emitter.BeginFinallyBlock();
             finallyBlock(_emitter);
@@ -126,14 +126,14 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         }
     }
 
-    public ITryCatchFinallyEmitter<FluentILGenerator> Try(Action<FluentILGenerator> tryBlock)
+    public ITryCatchFinallyEmitter<IFluentILEmitter> Try(Action<IFluentILEmitter> tryBlock)
     {
         var tcf = new TryCatchFinallyEmitter(this);
         tcf.Try(tryBlock);
         return tcf;
     }
 
-    public FluentILGenerator BeginCatchBlock(Type exceptionType)
+    public IFluentILEmitter BeginCatchBlock(Type exceptionType)
     {
         ArgumentNullException.ThrowIfNull(exceptionType);
         if (!exceptionType.Implements<Exception>())
@@ -143,14 +143,14 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator BeginExceptFilterBlock()
+    public IFluentILEmitter BeginExceptFilterBlock()
     {
         _ilGenerator.BeginExceptFilterBlock();
         AddInstruction(GeneratorInstruction.BeginExceptFilterBlock());
         return this;
     }
 
-    public FluentILGenerator BeginExceptionBlock(out Label label, [CallerArgumentExpression("label")] string lblName = "")
+    public IFluentILEmitter BeginExceptionBlock(out Label label, [CallerArgumentExpression("label")] string lblName = "")
     {
         label = _ilGenerator.BeginExceptionBlock();
         var emitterLabel = AddLabel(label, lblName);
@@ -158,42 +158,42 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator EndExceptionBlock()
+    public IFluentILEmitter EndExceptionBlock()
     {
         _ilGenerator.EndExceptionBlock();
         AddInstruction(GeneratorInstruction.EndExceptionBlock());
         return this;
     }
 
-    public FluentILGenerator BeginFaultBlock()
+    public IFluentILEmitter BeginFaultBlock()
     {
         _ilGenerator.BeginFaultBlock();
         AddInstruction(GeneratorInstruction.BeginFaultBlock());
         return this;
     }
 
-    public FluentILGenerator BeginFinallyBlock()
+    public IFluentILEmitter BeginFinallyBlock()
     {
         _ilGenerator.BeginFinallyBlock();
         AddInstruction(GeneratorInstruction.BeginFinallyBlock());
         return this;
     }
 
-    public FluentILGenerator BeginScope()
+    public IFluentILEmitter BeginScope()
     {
         _ilGenerator.BeginScope();
         AddInstruction(GeneratorInstruction.BeginScope());
         return this;
     }
 
-    public FluentILGenerator EndScope()
+    public IFluentILEmitter EndScope()
     {
         _ilGenerator.EndScope();
         AddInstruction(GeneratorInstruction.EndScope());
         return this;
     }
 
-    public FluentILGenerator UsingNamespace(string @namespace)
+    public IFluentILEmitter UsingNamespace(string @namespace)
     {
         // TODO: Validate namespace
         _ilGenerator.UsingNamespace(@namespace);
@@ -201,7 +201,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator DeclareLocal(Type localType, out LocalBuilder local, [CallerArgumentExpression("local")] string localName = "")
+    public IFluentILEmitter DeclareLocal(Type localType, out LocalBuilder local, [CallerArgumentExpression("local")] string localName = "")
     {
         ArgumentNullException.ThrowIfNull(localType);
         local = _ilGenerator.DeclareLocal(localType);
@@ -210,7 +210,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator DeclareLocal(Type localType, bool pinned, out LocalBuilder local,
+    public IFluentILEmitter DeclareLocal(Type localType, bool pinned, out LocalBuilder local,
         [CallerArgumentExpression("local")] string localName = "")
     {
         ArgumentNullException.ThrowIfNull(localType);
@@ -220,7 +220,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator DefineLabel(out Label label, [CallerArgumentExpression("label")] string lblName = "")
+    public IFluentILEmitter DefineLabel(out Label label, [CallerArgumentExpression("label")] string lblName = "")
     {
         label = _ilGenerator.DefineLabel();
         var emitterLable = AddLabel(label, lblName);
@@ -228,7 +228,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator MarkLabel(Label label)
+    public IFluentILEmitter MarkLabel(Label label)
     {
         _ilGenerator.MarkLabel(label);
         var emitterLabel = GetLabel(label);
@@ -236,7 +236,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator EmitCall(MethodInfo method, Type[]? optionParameterTypes)
+    public IFluentILEmitter EmitCall(MethodInfo method, Type[]? optionParameterTypes)
     {
         _ilGenerator.EmitCall(method.GetCallOpCode(),
             method,
@@ -245,7 +245,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator EmitCalli(CallingConvention convention, Type? returnType, Type[]? parameterTypes)
+    public IFluentILEmitter EmitCalli(CallingConvention convention, Type? returnType, Type[]? parameterTypes)
     {
         _ilGenerator.EmitCalli(
             OpCodes.Calli,
@@ -256,7 +256,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator EmitCalli(CallingConventions conventions, Type? returnType, Type[]? parameterTypes,
+    public IFluentILEmitter EmitCalli(CallingConventions conventions, Type? returnType, Type[]? parameterTypes,
         params Type[]? optionParameterTypes)
     {
         _ilGenerator.EmitCalli(OpCodes.Calli,
@@ -268,7 +268,7 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator ThrowException(Type exceptionType)
+    public IFluentILEmitter ThrowException(Type exceptionType)
     {
         ArgumentNullException.ThrowIfNull(exceptionType);
         if (!exceptionType.IsAssignableTo(typeof(Exception)))
@@ -278,119 +278,119 @@ public sealed class FluentILGenerator : IFluentILEmitter<FluentILGenerator>
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode)
+    public IFluentILEmitter Emit(OpCode opCode)
     {
         _ilGenerator.Emit(opCode);
         AddInstruction(new OpInstruction(opCode));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, byte value)
+    public IFluentILEmitter Emit(OpCode opCode, byte value)
     {
         _ilGenerator.Emit(opCode, value);
         AddInstruction(new OpInstruction(opCode, value));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, sbyte value)
+    public IFluentILEmitter Emit(OpCode opCode, sbyte value)
     {
         _ilGenerator.Emit(opCode, value);
         AddInstruction(new OpInstruction(opCode, value));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, short value)
+    public IFluentILEmitter Emit(OpCode opCode, short value)
     {
         _ilGenerator.Emit(opCode, value);
         AddInstruction(new OpInstruction(opCode, value));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, int value)
+    public IFluentILEmitter Emit(OpCode opCode, int value)
     {
         _ilGenerator.Emit(opCode, value);
         AddInstruction(new OpInstruction(opCode, value));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, long value)
+    public IFluentILEmitter Emit(OpCode opCode, long value)
     {
         _ilGenerator.Emit(opCode, value);
         AddInstruction(new OpInstruction(opCode, value));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, float value)
+    public IFluentILEmitter Emit(OpCode opCode, float value)
     {
         _ilGenerator.Emit(opCode, value);
         AddInstruction(new OpInstruction(opCode, value));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, double value)
+    public IFluentILEmitter Emit(OpCode opCode, double value)
     {
         _ilGenerator.Emit(opCode, value);
         AddInstruction(new OpInstruction(opCode, value));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, string? str)
+    public IFluentILEmitter Emit(OpCode opCode, string? str)
     {
         _ilGenerator.Emit(opCode, str);
         AddInstruction(new OpInstruction(opCode, str ?? ""));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, FieldInfo field)
+    public IFluentILEmitter Emit(OpCode opCode, FieldInfo field)
     {
         _ilGenerator.Emit(opCode, field);
         AddInstruction(new OpInstruction(opCode, field));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, MethodInfo method)
+    public IFluentILEmitter Emit(OpCode opCode, MethodInfo method)
     {
         _ilGenerator.Emit(opCode, method);
         AddInstruction(new OpInstruction(opCode, method));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, ConstructorInfo ctor)
+    public IFluentILEmitter Emit(OpCode opCode, ConstructorInfo ctor)
     {
         _ilGenerator.Emit(opCode, ctor);
         AddInstruction(new OpInstruction(opCode, ctor));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, SignatureHelper signature)
+    public IFluentILEmitter Emit(OpCode opCode, SignatureHelper signature)
     {
         _ilGenerator.Emit(opCode, signature);
         AddInstruction(new OpInstruction(opCode, signature));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, Type type)
+    public IFluentILEmitter Emit(OpCode opCode, Type type)
     {
         _ilGenerator.Emit(opCode, type);
         AddInstruction(new OpInstruction(opCode, type));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, LocalBuilder local)
+    public IFluentILEmitter Emit(OpCode opCode, LocalBuilder local)
     {
         _ilGenerator.Emit(opCode, local);
         AddInstruction(new OpInstruction(opCode, local));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, Label label)
+    public IFluentILEmitter Emit(OpCode opCode, Label label)
     {
         _ilGenerator.Emit(opCode, label);
         AddInstruction(new OpInstruction(opCode, label));
         return this;
     }
 
-    public FluentILGenerator Emit(OpCode opCode, params Label[] labels)
+    public IFluentILEmitter Emit(OpCode opCode, params Label[] labels)
     {
         _ilGenerator.Emit(opCode, labels);
         AddInstruction(new OpInstruction(opCode, labels));

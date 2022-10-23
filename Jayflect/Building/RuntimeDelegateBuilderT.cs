@@ -4,7 +4,7 @@ public class RuntimeDelegateBuilder<TDelegate> : RuntimeDelegateBuilder
     where TDelegate : Delegate
 {
     public RuntimeDelegateBuilder(DynamicMethod dynamicMethod)
-        : base(dynamicMethod, typeof(TDelegate))
+        : base(dynamicMethod, DelegateSignature.For<TDelegate>())
     {
         
     }

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Jay.Validation;
 
 namespace Jayflect.Extensions;
 
@@ -9,7 +10,7 @@ public static class ParameterInfoExtensions
         parameterType = parameter.ParameterType;
         if (parameterType.IsByRef)
         {
-            parameterType = parameterType.GetElementType()!;
+            parameterType = parameterType.GetElementType().ValidateNotNull();
             if (parameter.IsIn)
             {
                 return ParameterAccess.In;
@@ -22,6 +23,9 @@ public static class ParameterInfoExtensions
 
             return ParameterAccess.Ref;
         }
+
+        if (parameter.IsIn || parameter.IsOut)
+            throw new NotImplementedException();
         
         return ParameterAccess.Default;
     }

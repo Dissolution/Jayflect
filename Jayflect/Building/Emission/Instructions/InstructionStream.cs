@@ -1,6 +1,7 @@
 ﻿using Jay.Dumping;
 using Jay.Dumping.Extensions;
 using Jay.Extensions;
+using Jay.Validation;
 
 namespace Jayflect.Building.Emission.Instructions;
 
@@ -26,6 +27,16 @@ public class InstructionStream : LinkedList<InstructionLine>, IDumpable
         stringHandler.DumpDelimited(Environment.NewLine, this, dumpFormat);
     }
 
+    public void RemoveAfter(LinkedListNode<InstructionLine>? node)
+    {
+        if (node is null) return;
+        var last = this.Last;
+        if (last is not null && last.Value != node.Value)
+        {
+            RemoveLast();
+        }
+    }
+    
     public override string ToString()
     {
         return ((IDumpable)this).Dump();

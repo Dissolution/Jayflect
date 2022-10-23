@@ -1,4 +1,6 @@
-﻿namespace Jayflect.Extensions;
+﻿using System.Diagnostics;
+
+namespace Jayflect.Extensions;
 
 public static class TypeExtensions
 {
@@ -128,4 +130,18 @@ public static class TypeExtensions
     }
     
     public static bool IsObjectArray(this Type type) => type == typeof(object[]);
+    
+    public static ParameterAccess GetAccess(this Type type, out Type baseType)
+    {
+        if (type.IsByRef)
+        {
+            baseType = type.GetElementType()!;
+            return ParameterAccess.Ref;
+        }
+        else
+        {
+            baseType = type;
+            return ParameterAccess.Default;
+        }
+    }
 }

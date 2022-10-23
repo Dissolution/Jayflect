@@ -5,31 +5,37 @@ namespace Jayflect.Building;
 public class RuntimeDelegateBuilder
 {
     protected readonly DynamicMethod _dynamicMethod;
-    protected readonly Type _delegateType;
-    private FluentILGenerator? _emitter = null;
+    protected readonly DelegateSignature _delegateSig;
+    private IFluentILEmitter? _emitter = null;
 
     public string Name => _dynamicMethod.Name;
     public MethodAttributes Attributes => _dynamicMethod.Attributes;
     public CallingConventions CallingConventions => _dynamicMethod.CallingConvention;
-    public Type ReturnType => _dynamicMethod.ReturnType;
-    public ParameterInfo[] Parameters { get; }
-    public Type[] ParameterTypes { get; }
 
-    public ILGenerator IlGenerator => _dynamicMethod.GetILGenerator();
+    public Type ReturnType => _delegateSig.ReturnType;
 
-    public FluentILGenerator Emitter => _emitter ??= new(IlGenerator);
+    public ParameterInfo[] Parameters => _delegateSig.Parameters;
 
-    internal RuntimeDelegateBuilder(DynamicMethod dynamicMethod, Type delegateType)
+    public ParameterInfo? FirstParameter => Parameters.Length > 0 ? Parameters[0] : null;
+    
+    public Type[] ParameterTypes => _delegateSig.ParameterTypes;
+
+    public int ParameterCount => _delegateSig.ParameterCount;
+
+    public DelegateSignature Signature => _delegateSig;
+
+    //public ILGenerator IlGenerator => _dynamicMethod.GetILGenerator();
+
+    public IFluentILEmitter Emitter => _emitter ??= new FluentILGenerator(_dynamicMethod.GetILGenerator());
+
+    internal RuntimeDelegateBuilder(DynamicMethod dynamicMethod, DelegateSignature delegateSignature)
     {
-        Validate.IsDelegateType(delegateType);
         _dynamicMethod = dynamicMethod;
-        _delegateType = delegateType;
-        this.Parameters = _dynamicMethod.GetParameters();
-        this.ParameterTypes = Array.ConvertAll(this.Parameters, param => param.ParameterType);
+        _delegateSig = delegateSignature;
     }
 
     public Delegate CreateDelegate()
     {
-        return _dynamicMethod.CreateDelegate(_delegateType);
+        return _dynamicMethod.CreateDelegate(_delegateSig.GetDelegateType());
     }
 }

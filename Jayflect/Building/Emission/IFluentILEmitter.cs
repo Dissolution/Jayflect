@@ -3,6 +3,11 @@ using Jayflect.Caching;
 
 namespace Jayflect.Building.Emission;
 
+public interface IFluentILEmitter : IFluentILEmitter<IFluentILEmitter>
+{
+    
+}
+
 public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFluentOpCodeEmitter<TEmitter>
     where TEmitter : IFluentILEmitter<TEmitter>
 {

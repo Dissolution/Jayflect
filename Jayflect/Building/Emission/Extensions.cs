@@ -2,7 +2,7 @@
 
 namespace Jayflect.Building.Emission;
 
-internal static class Extensions
+public static class Extensions
 {
     public static bool IsShortForm(this Label label)
     {
@@ -46,4 +46,13 @@ internal static class Extensions
     /// <see cref="https://stackoverflow.com/questions/38078948/check-if-a-classes-property-or-method-is-declared-as-sealed"/>
     public static bool IsOverridable(this MethodBase method) => method.IsVirtual && !method.IsFinal;
     public static bool IsSealed(this MethodBase method) => !IsOverridable(method);
+
+    public static IFluentILEmitter GetEmitter(this ConstructorBuilder constructorBuilder)
+    {
+        return new FluentILGenerator(constructorBuilder.GetILGenerator());
+    }
+    public static IFluentILEmitter GetEmitter(this MethodBuilder methodBuilder)
+    {
+        return new FluentILGenerator(methodBuilder.GetILGenerator());
+    }
 }

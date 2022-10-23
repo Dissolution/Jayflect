@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Jay.Dumping;
+using Jayflect.Exceptions;
 using Jayflect.Extensions;
 
 namespace Jayflect;
@@ -135,9 +136,9 @@ public static partial class Reflect
         throw new NotImplementedException();
     }
 
-    public static ConstructorInfo FindConstructor<T>(params Type[] ctorParameterTypes)
+    public static ConstructorInfo FindConstructor<TInstance>(params Type[] parameterTypes)
     {
-        return FindConstructor(typeof(T), ctorParameterTypes);
+        return FindConstructor(typeof(TInstance), parameterTypes);
     }
 
     public static ConstructorInfo FindConstructor(Type instanceType, params object[] arguments)
