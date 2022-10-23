@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Jay.Extensions;
+﻿using Jay.Extensions;
 using Jayflect.Building.Emission.Instructions;
 
 // ReSharper disable IdentifierTypo
@@ -37,7 +36,7 @@ public sealed class FluentILGenerator : IFluentILEmitter
         }
         return name;
     }
-    
+
     private EmitterLabel AddLabel(Label label, string? lblName)
     {
         if (label.GetHashCode() != _labels.Count)
@@ -50,15 +49,6 @@ public sealed class FluentILGenerator : IFluentILEmitter
         return emitterLabel;
     }
 
-    private EmitterLabel GetLabel(Label label)
-    {
-        foreach (EmitterLabel emitterLabel in _labels)
-        {
-            if (emitterLabel == label) return emitterLabel;
-        }
-        throw new ArgumentException("The given Label does not belong to this Emitter", nameof(label));
-    }
-
     private EmitterLocal AddLocal(LocalBuilder local, string? localName)
     {
         if (local.LocalIndex != _locals.Count)
@@ -67,17 +57,8 @@ public sealed class FluentILGenerator : IFluentILEmitter
         }
 
         var emitterLocal = new EmitterLocal(local, GetVariableName(localName));
-       _locals.Add(emitterLocal);
-       return emitterLocal;
-    }
-    
-    private EmitterLocal GetLocal(LocalBuilder localBuilder)
-    {
-        foreach (EmitterLocal emitterLocal in _locals)
-        {
-            if (emitterLocal == localBuilder) return emitterLocal;
-        }
-        throw new ArgumentException("The given LocalBuilder does not belong to this Emitter", nameof(localBuilder));
+        _locals.Add(emitterLocal);
+        return emitterLocal;
     }
 
     private void AddInstruction(Instruction instruction)
@@ -86,51 +67,10 @@ public sealed class FluentILGenerator : IFluentILEmitter
         this.Instructions.AddLast(line);
     }
 
-    private sealed class TryCatchFinallyEmitter : ITryCatchFinallyEmitter<IFluentILEmitter>
+
+    public ITryCatchFinallyBuilder<IFluentILEmitter> Try(Action<IFluentILEmitter> tryBlock)
     {
-        private readonly FluentILGenerator _emitter;
-
-        public IFluentILEmitter EndTry
-        {
-            get
-            {
-                _emitter.EndExceptionBlock();
-                return _emitter;
-            }
-        }
-
-        public TryCatchFinallyEmitter(FluentILGenerator emitter)
-        {
-            _emitter = emitter;
-        }
-
-        public void Try(Action<IFluentILEmitter> tryBlock)
-        {
-            _emitter.BeginExceptionBlock(out _);
-            tryBlock(_emitter);
-        }
-
-        public ITryCatchFinallyEmitter<IFluentILEmitter> Catch(Type exceptionType, Action<IFluentILEmitter> catchBlock)
-        {
-            _emitter.BeginCatchBlock(exceptionType);
-            catchBlock(_emitter);
-            return this;
-        }
-
-        public IFluentILEmitter Finally(Action<IFluentILEmitter> finallyBlock)
-        {
-            _emitter.BeginFinallyBlock();
-            finallyBlock(_emitter);
-            _emitter.EndExceptionBlock();
-            return _emitter;
-        }
-    }
-
-    public ITryCatchFinallyEmitter<IFluentILEmitter> Try(Action<IFluentILEmitter> tryBlock)
-    {
-        var tcf = new TryCatchFinallyEmitter(this);
-        tcf.Try(tryBlock);
-        return tcf;
+        return new TCFBuilder<IFluentILEmitter>(this).Try(tryBlock);
     }
 
     public IFluentILEmitter BeginCatchBlock(Type exceptionType)
@@ -150,10 +90,10 @@ public sealed class FluentILGenerator : IFluentILEmitter
         return this;
     }
 
-    public IFluentILEmitter BeginExceptionBlock(out Label label, [CallerArgumentExpression("label")] string lblName = "")
+    public IFluentILEmitter BeginExceptionBlock(out EmitterLabel emitterLabel, [CallerArgumentExpression("emitterLabel")] string lblName = "")
     {
-        label = _ilGenerator.BeginExceptionBlock();
-        var emitterLabel = AddLabel(label, lblName);
+        var label = _ilGenerator.BeginExceptionBlock();
+        emitterLabel = AddLabel(label, lblName);
         AddInstruction(GeneratorInstruction.BeginExceptionBlock(emitterLabel));
         return this;
     }
@@ -201,37 +141,37 @@ public sealed class FluentILGenerator : IFluentILEmitter
         return this;
     }
 
-    public IFluentILEmitter DeclareLocal(Type localType, out LocalBuilder local, [CallerArgumentExpression("local")] string localName = "")
+    public IFluentILEmitter DeclareLocal(Type localType, out EmitterLocal emitterLocal,
+        [CallerArgumentExpression("emitterLocal")] string localName = "")
     {
         ArgumentNullException.ThrowIfNull(localType);
-        local = _ilGenerator.DeclareLocal(localType);
-        var emitterLocal = AddLocal(local, localName);
-       AddInstruction(GeneratorInstruction.DeclareLocal(emitterLocal));
-        return this;
-    }
-
-    public IFluentILEmitter DeclareLocal(Type localType, bool pinned, out LocalBuilder local,
-        [CallerArgumentExpression("local")] string localName = "")
-    {
-        ArgumentNullException.ThrowIfNull(localType);
-        local = _ilGenerator.DeclareLocal(localType, pinned);
-        var emitterLocal = AddLocal(local, localName);
+        var local = _ilGenerator.DeclareLocal(localType);
+        emitterLocal = AddLocal(local, localName);
         AddInstruction(GeneratorInstruction.DeclareLocal(emitterLocal));
         return this;
     }
 
-    public IFluentILEmitter DefineLabel(out Label label, [CallerArgumentExpression("label")] string lblName = "")
+    public IFluentILEmitter DeclareLocal(Type localType, bool pinned, out EmitterLocal emitterLocal,
+        [CallerArgumentExpression("emitterLocal")] string localName = "")
     {
-        label = _ilGenerator.DefineLabel();
-        var emitterLable = AddLabel(label, lblName);
-        AddInstruction(GeneratorInstruction.DefineLabel(emitterLable));
+        ArgumentNullException.ThrowIfNull(localType);
+        var local = _ilGenerator.DeclareLocal(localType, pinned);
+        emitterLocal = AddLocal(local, localName);
+        AddInstruction(GeneratorInstruction.DeclareLocal(emitterLocal));
         return this;
     }
 
-    public IFluentILEmitter MarkLabel(Label label)
+    public IFluentILEmitter DefineLabel(out EmitterLabel emitterLabel, [CallerArgumentExpression("emitterLabel")] string lblName = "")
     {
-        _ilGenerator.MarkLabel(label);
-        var emitterLabel = GetLabel(label);
+        var label = _ilGenerator.DefineLabel();
+        emitterLabel = AddLabel(label, lblName);
+        AddInstruction(GeneratorInstruction.DefineLabel(emitterLabel));
+        return this;
+    }
+
+    public IFluentILEmitter MarkLabel(EmitterLabel emitterLabel)
+    {
+        _ilGenerator.MarkLabel(emitterLabel);
         AddInstruction(GeneratorInstruction.MarkLabel(emitterLabel));
         return this;
     }
@@ -336,8 +276,9 @@ public sealed class FluentILGenerator : IFluentILEmitter
 
     public IFluentILEmitter Emit(OpCode opCode, string? str)
     {
+        str ??= "";
         _ilGenerator.Emit(opCode, str);
-        AddInstruction(new OpInstruction(opCode, str ?? ""));
+        AddInstruction(new OpInstruction(opCode, str));
         return this;
     }
 
@@ -376,23 +317,23 @@ public sealed class FluentILGenerator : IFluentILEmitter
         return this;
     }
 
-    public IFluentILEmitter Emit(OpCode opCode, LocalBuilder local)
+    public IFluentILEmitter Emit(OpCode opCode, EmitterLocal local)
     {
         _ilGenerator.Emit(opCode, local);
         AddInstruction(new OpInstruction(opCode, local));
         return this;
     }
 
-    public IFluentILEmitter Emit(OpCode opCode, Label label)
+    public IFluentILEmitter Emit(OpCode opCode, EmitterLabel label)
     {
         _ilGenerator.Emit(opCode, label);
         AddInstruction(new OpInstruction(opCode, label));
         return this;
     }
 
-    public IFluentILEmitter Emit(OpCode opCode, params Label[] labels)
+    public IFluentILEmitter Emit(OpCode opCode, params EmitterLabel[] labels)
     {
-        _ilGenerator.Emit(opCode, labels);
+        _ilGenerator.Emit(opCode, Array.ConvertAll(labels, el => el.Label));
         AddInstruction(new OpInstruction(opCode, labels));
         return this;
     }

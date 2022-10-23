@@ -11,7 +11,7 @@ public interface IFluentILGenerator<TGenerator> : IFluentIL<TGenerator>
     /// This will leave you in the correct place to execute <see langword="finally"/> blocks or to finish the <see langword="try"/>.
     /// </param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.beginexceptionblock"/>
-    TGenerator BeginExceptionBlock(out Label label, [CallerArgumentExpression(nameof(label))] string lblName = "");
+    TGenerator BeginExceptionBlock(out EmitterLabel label, [CallerArgumentExpression(nameof(label))] string lblName = "");
 
     /// <summary>
     /// Begins a <see langword="catch"/> block.
@@ -88,25 +88,17 @@ public interface IFluentILGenerator<TGenerator> : IFluentIL<TGenerator>
     /// <exception cref="NotSupportedException">If this <see cref="IILGenerator{T}"/> belongs to a <see cref="DynamicMethod"/>.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.usingnamespace?view=netcore-3.0"/>
     TGenerator UsingNamespace(string usingNamespace);
-
-    TGenerator Scoped(Action<TGenerator> scopedBlock)
-    {
-        BeginScope();
-        scopedBlock((TGenerator)this);
-        EndScope();
-        return (TGenerator)this;
-    }
     #endregion
 
     /// <summary>
     /// Declares a <see cref="LocalBuilder"/> variable of the specified <see cref="Type"/>.
     /// </summary>
     /// <param name="localType">The type of the <see cref="LocalBuilder"/>.</param>
-    /// <param name="local">Returns the declared <see cref="LocalBuilder"/>.</param>
+    /// <param name="emitterLocalns the declared <see cref="LocalBuilder"/>.</param>
     /// <exception cref="ArgumentNullException">If <paramref name="localType"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">If <paramref name="localType"/> was created with <see cref="TypeBuilder.CreateType"/>.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.declarelocal#System_Reflection_Emit_ILGenerator_DeclareLocal_System_Type_"/>
-    TGenerator DeclareLocal(Type localType, out LocalBuilder local, [CallerArgumentExpression("local")] string localName = "");
+    TGenerator DeclareLocal(Type localType, out EmitterLocal emitterLocal, [CallerArgumentExpression("emitterLocal")] string localName = "");
 
     /// <summary>
     /// Declares a <see cref="LocalBuilder"/> variable of the specified <see cref="Type"/>.
@@ -114,7 +106,7 @@ public interface IFluentILGenerator<TGenerator> : IFluentIL<TGenerator>
     /// <typeparam name="T">The type of the <see cref="LocalBuilder"/>.</typeparam>
     /// <param name="local">Returns the declared <see cref="LocalBuilder"/>.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.declarelocal#System_Reflection_Emit_ILGenerator_DeclareLocal_System_Type_"/>
-    TGenerator DeclareLocal<T>(out LocalBuilder local, [CallerArgumentExpression("local")] string localName = "")
+    TGenerator DeclareLocal<T>(out EmitterLocal local, [CallerArgumentExpression("local")] string localName = "")
         => DeclareLocal(typeof(T), out local, localName);
 
     /// <summary>
@@ -122,41 +114,41 @@ public interface IFluentILGenerator<TGenerator> : IFluentIL<TGenerator>
     /// </summary>
     /// <param name="localType">The type of the <see cref="LocalBuilder"/>.</param>
     /// <param name="pinned">Whether or not the <see cref="LocalBuilder"/> should be pinned in memory.</param>
-    /// <param name="local">Returns the declared <see cref="LocalBuilder"/>.</param>
+    /// <param name="emitterLocalns the declared <see cref="LocalBuilder"/>.</param>
     /// <exception cref="ArgumentNullException">If <paramref name="localType"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">If <paramref name="localType"/> was created with <see cref="TypeBuilder.CreateType"/>.</exception>
     /// <exception cref="InvalidOperationException">If the method body of the enclosing method was created with <see cref="M:MethodBuilder.CreateMethodBody"/>.</exception>
     /// <exception cref="NotSupportedException">If the method this <see cref="Jay.Reflection.Building.Emission.IILGenerator{TGenerator}"/> is associated with is not wrapping a <see cref="MethodBuilder"/>.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.declarelocal#System_Reflection_Emit_ILGenerator_DeclareLocal_System_Type_System_Boolean_"/>
-    TGenerator DeclareLocal(Type localType, bool pinned, out LocalBuilder local, [CallerArgumentExpression("local")] string localName = "");
+    TGenerator DeclareLocal(Type localType, bool pinned, out EmitterLocal emitterLocal, [CallerArgumentExpression("emitterLocal")] string localName = "");
 
     /// <summary>
     /// Declares a <see cref="LocalBuilder"/> variable of the specified <see cref="Type"/>.
     /// </summary>
     /// <typeparam name="T">The type of the <see cref="LocalBuilder"/>.</typeparam>
     /// <param name="pinned">Whether or not the <see cref="LocalBuilder"/> should be pinned in memory.</param>
-    /// <param name="local">Returns the declared <see cref="LocalBuilder"/>.</param>
+    /// <param name="emitterLocalns the declared <see cref="LocalBuilder"/>.</param>
     /// <exception cref="InvalidOperationException">If the method body of the enclosing method was created with <see cref="M:MethodBuilder.CreateMethodBody"/>.</exception>
     /// <exception cref="NotSupportedException">If the method this <see cref="Jay.Reflection.Building.Emission.IILGenerator{TGenerator}"/> is associated with is not wrapping a <see cref="MethodBuilder"/>.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.declarelocal#System_Reflection_Emit_ILGenerator_DeclareLocal_System_Type_System_Boolean_"/>
-    TGenerator DeclareLocal<T>(bool pinned, out LocalBuilder local, [CallerArgumentExpression("local")] string localName = "")
-        => DeclareLocal(typeof(T), pinned, out local, localName);
+    TGenerator DeclareLocal<T>(bool pinned, out EmitterLocal emitterLocal, [CallerArgumentExpression("emitterLocal")] string localName = "")
+        => DeclareLocal(typeof(T), pinned, out emitterLocal, localName);
 
     /// <summary>
     /// Declares a new <see cref="Label"/>.
     /// </summary>
-    /// <param name="label">Returns the new <see cref="Label"/> that can be used for branching.</param>
+    /// <param name="emitterLabel">Returns the new <see cref="Label"/> that can be used for branching.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.definelabel"/>
-    TGenerator DefineLabel(out Label label, [CallerArgumentExpression("label")] string lblName = "");
+    TGenerator DefineLabel(out EmitterLabel emitterLabel, [CallerArgumentExpression("emitterLabel")] string lblName = "");
 
     /// <summary>
     /// Marks the stream's current position with the given <see cref="Label"/>.
     /// </summary>
-    /// <param name="label">The <see cref="Label"/> for which to set an index.</param>
-    /// <exception cref="ArgumentException">If the <paramref name="label"/> has an invalid index.</exception>
-    /// <exception cref="ArgumentException">If the <paramref name="label"/> has already been marked.</exception>
+    /// <param name="emitterLabelsee cref="Label"/> for which to set an index.</param>
+    /// <exception cref="ArgumentException">If the <paramref name="emitterLabel an invalid index.</exception>
+    /// <exception cref="ArgumentException">If the <paramref name="emitterLabel already been marked.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.marklabel"/>
-    TGenerator MarkLabel(Label label);
+    TGenerator MarkLabel(EmitterLabel emitterLabel);
 
     /// <summary>
     /// Puts a <see cref="OpCodes.Call"/>, <see cref="OpCodes.Callvirt"/>, or <see cref="OpCodes.Newobj"/> instruction onto the stream to call a <see langword="varargs"/> <see cref="MethodInfo"/>.

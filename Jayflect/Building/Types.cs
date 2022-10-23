@@ -5,7 +5,7 @@
 /// </summary>
 public struct NoInstance
 {
-    private static NoInstance _instance = default;
+    private static NoInstance _instance;
 
     /// <summary>
     /// Gets a <see langword="ref"/> to an instance of <see cref="NoInstance"/> for use in accessing <see langword="static"/> methods

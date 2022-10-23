@@ -24,7 +24,7 @@ public static class EnumerableExtensions
                 if (!enumerator.MoveNext())
                     yield break;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // ignore this, stop enumerating
                 yield break;
@@ -36,7 +36,7 @@ public static class EnumerableExtensions
             {
                 current = enumerator.Current;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // ignore this, but continue enumerating
                 continue;

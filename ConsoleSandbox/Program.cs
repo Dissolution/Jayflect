@@ -1,31 +1,35 @@
 ﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using Jay.Dumping;
-using Jay.Dumping.Extensions;
-using static Jay.Dumping.Extensions.DumperImport;
-
+using Jay.Validation;
 using Jayflect;
+using Jayflect.Extensions;
 
-var flags = Jayflect.Reflect.Flags.Instance;
-var ctor = Reflect.FindConstructor<Program>();
+#pragma warning disable
 
+var field = typeof(Entity).GetProperty("Id", Reflect.Flags.Instance).GetBackingField().ValidateNotNull();
 
-var k = DumperCache.KnownDumpers;
-
-var str = Dump($"This {typeof(int)} {147} is Lit! {typeof(IList<>)}");
-var strb = Dump((ReadOnlySpan<char>)"blah");
-var strc = typeof(Program).Dump();
+var entity = new Entity(13);
+field.SetValue(ref entity, 147);
 
 
-Console.WriteLine(str);
 Debugger.Break();
 
 
-static void DoThing(DumpFormat options)
+
+public class Entity
 {
-    var str = options.ToString();
-    Console.WriteLine(str);
+    public int Id { get; }
+
+    public string Name { get; set; } = "";
+
+    public Entity(int id)
+    {
+        this.Id = id;
+    }
+
+    public override string ToString()
+    {
+        return $"{Name} #{Id}";
+    }
 }
 
 

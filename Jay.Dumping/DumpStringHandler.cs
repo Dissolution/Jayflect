@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using Jay.Dumping.Extensions;
+// ReSharper disable UnusedParameter.Local
 
 namespace Jay.Dumping;
 

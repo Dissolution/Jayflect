@@ -1,4 +1,5 @@
-﻿using Jay.Dumping;
+﻿using Jay.Comparison;
+using Jay.Dumping;
 using Jay.Dumping.Extensions;
 
 namespace Jayflect.Building.Emission.Instructions;
@@ -62,7 +63,7 @@ public sealed class OpInstruction : Instruction
     {
         return instruction is OpInstruction opInstruction &&
                opInstruction.OpCode == this.OpCode &&
-               object.Equals(opInstruction.Value, this.Value);
+               DefaultComparers.Instance.Equals(opInstruction.Value, this.Value);
     }
 
     public override void DumpTo(ref DefaultInterpolatedStringHandler stringHandler, DumpFormat dumpFormat = default)
@@ -87,6 +88,10 @@ public sealed class OpInstruction : Instruction
                 stringHandler.Write('"');
                 stringHandler.Write(str);
                 stringHandler.Write('"');
+            }
+            else if (Value is IDumpable dumpable)
+            {
+                dumpable.DumpTo(ref stringHandler, dumpFormat);
             }
             else
             {

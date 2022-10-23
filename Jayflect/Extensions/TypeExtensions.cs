@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Jayflect.Extensions;
+﻿namespace Jayflect.Extensions;
 
 public static class TypeExtensions
 {
@@ -124,7 +122,7 @@ public static class TypeExtensions
         return (int?)_sizeOfMethod.MakeGenericMethod(type).Invoke(null, null);
     }
 
-    public static object? GetUninitialized(this Type type)
+    public static object GetUninitialized(this Type type)
     {
         return RuntimeHelpers.GetUninitializedObject(type);
     }

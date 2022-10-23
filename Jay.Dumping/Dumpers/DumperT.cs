@@ -7,7 +7,7 @@ public abstract class Dumper<T> : Dumper
 {
     public sealed override bool CanDump(Type type) => type.Implements<T>();
 
-    internal sealed override void DumpObject(ref DefaultInterpolatedStringHandler stringHandler, object obj, DumpFormat dumpFormat)
+    internal sealed override void DumpObject(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] object obj, DumpFormat dumpFormat)
     {
         if (obj is T value)
         {

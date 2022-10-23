@@ -25,5 +25,6 @@ internal sealed class DefaultDumper<T> : Dumper<T>
         
         // Do not call Dump, we want what DefStringHandler does!
         stringHandler.AppendFormatted<T>(value);
+        Debug.Assert(value is not null);
     }
 }

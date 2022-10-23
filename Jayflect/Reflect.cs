@@ -38,7 +38,7 @@ public static partial class Reflect
         public const BindingFlags NonPublicInstance = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.IgnoreCase;
     }
 
-    private static HashSet<Type>? _allTypes = null;
+    private static HashSet<Type>? _allTypes;
     
     public static IReadOnlySet<Type> AllExportedTypes
     {
@@ -99,7 +99,7 @@ public static partial class Reflect
             if (expr is ConstantExpression constantExpression)
                 return constantExpression.Value;
             throw new NotImplementedException();
-            return null;
+            
         }).ToList();
         var methodParams = method.GetParameters();
         if (methodArgs.Count != methodParams.Length)

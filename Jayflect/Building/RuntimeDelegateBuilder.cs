@@ -6,7 +6,7 @@ public class RuntimeDelegateBuilder
 {
     protected readonly DynamicMethod _dynamicMethod;
     protected readonly DelegateSignature _delegateSig;
-    private IFluentILEmitter? _emitter = null;
+    private IFluentILEmitter? _emitter;
 
     public string Name => _dynamicMethod.Name;
     public MethodAttributes Attributes => _dynamicMethod.Attributes;

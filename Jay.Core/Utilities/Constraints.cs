@@ -1,4 +1,5 @@
-﻿namespace Jay.Utilities;
+﻿// ReSharper disable UnusedTypeParameter
+namespace Jay.Utilities;
 
 public static class Constraints
 {

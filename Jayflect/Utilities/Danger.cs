@@ -1,6 +1,6 @@
 ﻿namespace Jayflect;
 
-public unsafe static class Danger
+public static unsafe class Danger
 {
 #region Read / Write
 

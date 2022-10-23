@@ -80,7 +80,7 @@ public interface IFluentOpCodeEmitter<TEmitter> : IFluentIL<TEmitter>
     /// <param name="opCode">The MSIL instruction to be emitted onto the stream.</param>
     /// <param name="label">The <see cref="Label"/> to branch from this location.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.emit#System_Reflection_Emit_ILGenerator_Emit_System_Reflection_Emit_OpCode_System_Reflection_Emit_Label_"/>
-    TEmitter Emit(OpCode opCode, Label label);
+    TEmitter Emit(OpCode opCode, EmitterLabel label);
 
     /// <summary>
     /// Emits an <see cref="OpCode"/> onto the stream and leaves space to include a <see cref="Label"/> when fixes are done.
@@ -90,7 +90,7 @@ public interface IFluentOpCodeEmitter<TEmitter> : IFluentIL<TEmitter>
     /// <exception cref="ArgumentNullException">If <paramref name="labels"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentNullException">If <paramref name="labels"/> is empty.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.emit#System_Reflection_Emit_ILGenerator_Emit_System_Reflection_Emit_OpCode_System_Reflection_Emit_Label___"/>
-    TEmitter Emit(OpCode opCode, params Label[] labels);
+    TEmitter Emit(OpCode opCode, params EmitterLabel[] labels);
 
     /// <summary>
     /// Emits an <see cref="OpCode"/> onto the stream followed by the index of the given <see cref="LocalBuilder"/>.
@@ -99,7 +99,7 @@ public interface IFluentOpCodeEmitter<TEmitter> : IFluentIL<TEmitter>
     /// <param name="local">The <see cref="LocalBuilder"/> to emit the index of.</param>
     /// <exception cref="InvalidOperationException">If <paramref name="opCode"/> is a single-byte instruction and <paramref name="local"/> has an index greater than <see cref="byte.MaxValue"/>.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.ilgenerator.emit#System_Reflection_Emit_ILGenerator_Emit_System_Reflection_Emit_OpCode_System_Reflection_Emit_LocalBuilder_"/>
-    TEmitter Emit(OpCode opCode, LocalBuilder local);
+    TEmitter Emit(OpCode opCode, EmitterLocal local);
 
     /// <summary>
     /// Emits an <see cref="OpCode"/> onto the stream followed by the given <see cref="FieldInfo"/>.

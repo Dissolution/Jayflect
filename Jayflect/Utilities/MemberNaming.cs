@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using Jay.Collections;
 using Jay.Collections.Pooling;
 
 namespace Jayflect;
@@ -10,7 +9,7 @@ namespace Jayflect;
 public static class MemberNaming
 {
     private const char BAD_CHAR = 'X';
-    private static ulong _nameCount = 0UL;
+    private static ulong _nameCount;
     
     /// <summary>
     /// Is the given <paramref name="ch"/> a valid <see cref="MemberInfo"/> Name <see cref="char"/>?

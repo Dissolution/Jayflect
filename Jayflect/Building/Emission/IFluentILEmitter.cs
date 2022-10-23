@@ -1,5 +1,6 @@
 ﻿using Jay.Extensions;
 using Jayflect.Caching;
+// ReSharper disable IdentifierTypo
 
 namespace Jayflect.Building.Emission;
 
@@ -8,9 +9,30 @@ public interface IFluentILEmitter : IFluentILEmitter<IFluentILEmitter>
     
 }
 
+// public interface IFriendlyILEmitter : IFriendlyILEmitter<IFriendlyILEmitter>
+// {
+//     
+// }
+//
+// public interface IFriendlyILEmitter<TEmitter> : IFluentIL<TEmitter>
+//     where TEmitter : IFriendlyILEmitter<TEmitter>
+// {
+//     IFluentILEmitter Fluent { get; }
+//     
+//     TEmitter Scoped(Action<TEmitter> scopedBlock)
+//     {
+//         Fluent.BeginScope();
+//         scopedBlock(This);
+//         Fluent.EndScope();
+//         return This;
+//     }
+// }
+
 public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFluentOpCodeEmitter<TEmitter>
     where TEmitter : IFluentILEmitter<TEmitter>
 {
+    // IFriendlyILEmitter Friendly { get; }
+    
 #region Try/Catch/Finally
     /// <summary>
     /// Transfers control from the filter clause of an exception back to the Common Language Infrastructure (CLI) exception handler.
@@ -124,6 +146,8 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <exception cref="ArgumentOutOfRangeException">If <paramref name="index"/> is invalid.</exception>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldarga_s"/>
     TEmitter Ldarga_S(int index) => Ldarga(index);
+    
+    TEmitter Ldarga(ParameterInfo parameter) => Ldarga(parameter.Position);
     #endregion
     #region Starg
     /// <summary>
@@ -152,14 +176,14 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     #region Locals
     #region Load
     /// <summary>
-    /// Loads the given <see cref="LocalBuilder"/>'s value onto the stack.
+    /// Loads the given <see cref="EmitterLocal"/>'s value onto the stack.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloc"/>
     /// <seealso href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloc_s"/>
-    TEmitter Ldloc(LocalBuilder local)
+    TEmitter Ldloc(EmitterLocal emitterLocal)
     {
-        ArgumentNullException.ThrowIfNull(local);
-        switch (local.LocalIndex)
+        ArgumentNullException.ThrowIfNull(emitterLocal);
+        switch (emitterLocal.Index)
         {
             case 0:
                 return Emit(OpCodes.Ldloc_0);
@@ -171,66 +195,66 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
                 return Emit(OpCodes.Ldloc_3);
             default:
             {
-                if (local.IsShortForm())
-                    return Emit(OpCodes.Ldloc_S, local);
-                return Emit(OpCodes.Ldloc, local);
+                if (emitterLocal.IsShortForm)
+                    return Emit(OpCodes.Ldloc_S, emitterLocal);
+                return Emit(OpCodes.Ldloc, emitterLocal);
             }
         }
     }
 
     /// <summary>
-    /// Loads the given short-form <see cref="LocalBuilder"/>'s value onto the stack.
+    /// Loads the given short-form <see cref="EmitterLocal"/>'s value onto the stack.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="local"/> is not short-form.</exception>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloc_s"/>
-    TEmitter Ldloc_S(LocalBuilder local) => Ldloc(local);
+    TEmitter Ldloc_S(EmitterLocal local) => Ldloc(local);
 
     /// <summary>
-    /// Loads the value of the <see cref="LocalBuilder"/> variable at index 0 onto the stack.
+    /// Loads the value of the <see cref="EmitterLocal"/> variable at index 0 onto the stack.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloc_0"/>
     TEmitter Ldloc_0() => Emit(OpCodes.Ldloc_0);
 
     /// <summary>
-    /// Loads the value of the <see cref="LocalBuilder"/> variable at index 1 onto the stack.
+    /// Loads the value of the <see cref="EmitterLocal"/> variable at index 1 onto the stack.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloc_1"/>
     TEmitter Ldloc_1() => Emit(OpCodes.Ldloc_1);
 
     /// <summary>
-    /// Loads the value of the <see cref="LocalBuilder"/> variable at index 2 onto the stack.
+    /// Loads the value of the <see cref="EmitterLocal"/> variable at index 2 onto the stack.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloc_2"/>
     TEmitter Ldloc_2() => Emit(OpCodes.Ldloc_2);
 
     /// <summary>
-    /// Loads the value of the <see cref="LocalBuilder"/> variable at index 3 onto the stack.
+    /// Loads the value of the <see cref="EmitterLocal"/> variable at index 3 onto the stack.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloc_3"/>
     TEmitter Ldloc_3() => Emit(OpCodes.Ldloc_3);
 
     /// <summary>
-    /// Loads the address of the given <see cref="LocalBuilder"/> variable.
+    /// Loads the address of the given <see cref="EmitterLocal"/> variable.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloca"/>
     /// <seealso href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloca_s"/>
-    TEmitter Ldloca(LocalBuilder local)
+    TEmitter Ldloca(EmitterLocal local)
     {
         ArgumentNullException.ThrowIfNull(local);
-        if (local.IsShortForm())
+        if (local.IsShortForm)
             return Emit(OpCodes.Ldloca_S, local);
         return Emit(OpCodes.Ldloca, local);
     }
 
     /// <summary>
-    /// Loads the address of the given short-form <see cref="LocalBuilder"/> variable.
+    /// Loads the address of the given short-form <see cref="EmitterLocal"/> variable.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="local"/> is not short-form.</exception>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ldloca_s"/>
-    TEmitter Ldloca_S(LocalBuilder local)
+    TEmitter Ldloca_S(EmitterLocal local)
     {
         ArgumentNullException.ThrowIfNull(local);
-        if (local.IsShortForm())
+        if (local.IsShortForm)
             return Emit(OpCodes.Ldloca_S, local);
         return Emit(OpCodes.Ldloca, local);
     }
@@ -238,15 +262,15 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
 
     #region Store
     /// <summary>
-    /// Pops the value from the top of the stack and stores it in a the given <see cref="LocalBuilder"/>.
+    /// Pops the value from the top of the stack and stores it in a the given <see cref="EmitterLocal"/>.
     /// </summary>
-    /// <param name="local">The <see cref="LocalBuilder"/> to store the value in.</param>
+    /// <param name="local">The <see cref="EmitterLocal"/> to store the value in.</param>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.stloc"/>
     /// <seealso href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.stloc_s"/>
-    TEmitter Stloc(LocalBuilder local)
+    TEmitter Stloc(EmitterLocal local)
     {
         ArgumentNullException.ThrowIfNull(local);
-        switch (local.LocalIndex)
+        switch (local.Index)
         {
             case 0:
                 return Emit(OpCodes.Stloc_0);
@@ -258,7 +282,7 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
                 return Emit(OpCodes.Stloc_3);
             default:
             {
-                if (local.IsShortForm())
+                if (local.IsShortForm)
                     return Emit(OpCodes.Stloc_S, local);
                 return Emit(OpCodes.Stloc, local);
             }
@@ -266,32 +290,32 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     }
 
     /// <summary>
-    /// Pops the value from the top of the stack and stores it in a the given short-form <see cref="LocalBuilder"/>.
+    /// Pops the value from the top of the stack and stores it in a the given short-form <see cref="EmitterLocal"/>.
     /// </summary>
-    /// <param name="local">The short-form <see cref="LocalBuilder"/> to store the value in.</param>
+    /// <param name="local">The short-form <see cref="EmitterLocal"/> to store the value in.</param>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.stloc_s"/>
-    TEmitter Stloc_S(LocalBuilder local) => Stloc(local);
+    TEmitter Stloc_S(EmitterLocal local) => Stloc(local);
 
     /// <summary>
-    /// Pops the value from the top of the stack and stores it in a the <see cref="LocalBuilder"/> at index 0.
+    /// Pops the value from the top of the stack and stores it in a the <see cref="EmitterLocal"/> at index 0.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.stloc_0"/>
     TEmitter Stloc_0() => Emit(OpCodes.Stloc_0);
 
     /// <summary>
-    /// Pops the value from the top of the stack and stores it in a the <see cref="LocalBuilder"/> at index 1.
+    /// Pops the value from the top of the stack and stores it in a the <see cref="EmitterLocal"/> at index 1.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.stloc_1"/>
     TEmitter Stloc_1() => Emit(OpCodes.Stloc_1);
 
     /// <summary>
-    /// Pops the value from the top of the stack and stores it in a the <see cref="LocalBuilder"/> at index 2.
+    /// Pops the value from the top of the stack and stores it in a the <see cref="EmitterLocal"/> at index 2.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.stloc_2"/>
     TEmitter Stloc_2() => Emit(OpCodes.Stloc_2);
 
     /// <summary>
-    /// Pops the value from the top of the stack and stores it in a the <see cref="LocalBuilder"/> at index 3.
+    /// Pops the value from the top of the stack and stores it in a the <see cref="EmitterLocal"/> at index 3.
     /// </summary>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.stloc_3"/>
     TEmitter Stloc_3() => Emit(OpCodes.Stloc_3);
@@ -305,14 +329,14 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="labels">The labels for the jumptable.</param>
     /// <exception cref="ArgumentNullException">If <paramref name="labels"/> is <see langword="null"/> or empty.</exception>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.switch"/>
-    TEmitter Switch(params Label[] labels)
+    TEmitter Switch(params EmitterLabel[] labels)
     {
         if (labels is null || labels.Length == 0)
             throw new ArgumentNullException(nameof(labels));
         return Emit(OpCodes.Switch, labels);
     }
 
-    TEmitter DefineAndMarkLabel(out Label label, [CallerArgumentExpression("label")] string lblName = "")
+    TEmitter DefineAndMarkLabel(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "")
         => DefineLabel(out label, lblName).MarkLabel(label);
     #endregion
 
@@ -324,10 +348,22 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <exception cref="ArgumentNullException">If <paramref name="method"/> is null.</exception>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.call"/>
     /// <seealso href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.callvirt"/>
-    TEmitter Call(MethodInfo method)
+    TEmitter Call(MethodBase method)
     {
         ArgumentNullException.ThrowIfNull(method);
-        return Emit(method.GetCallOpCode(), method);
+        if (method is ConstructorInfo ctor)
+        {
+            return Emit(OpCodes.Newobj, ctor);
+        }
+        else if (method is MethodInfo methodInfo)
+        {
+            return Emit(methodInfo.GetCallOpCode(), methodInfo); 
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
+        
 
         /* TO  DO:
          * Note :
@@ -658,9 +694,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.br?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.br_s?view=netcore-3.0"/>
-    TEmitter Br(Label label)
+    TEmitter Br(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Br_S, label);
         return Emit(OpCodes.Br, label);
     }
@@ -671,9 +707,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.br_s?view=netcore-3.0"/>
-    TEmitter Br_S(Label label) => Br(label);
+    TEmitter Br_S(EmitterLabel label) => Br(label);
 
-    TEmitter Br(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Br(label);
+    TEmitter Br(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Br(label);
 
     /// <summary>
     /// Exits the current method and jumps to the given <see cref="MethodInfo"/>.
@@ -693,9 +729,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.leave"/>
     /// <seealso href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.leave_s"/>
-    TEmitter Leave(Label label)
+    TEmitter Leave(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Leave_S, label);
         return Emit(OpCodes.Leave, label);
     }
@@ -706,9 +742,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> is not short-form.</exception>
     /// <see href="http://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.leave_s"/>
-    TEmitter Leave_S(Label label) => Leave(label);
+    TEmitter Leave_S(EmitterLabel label) => Leave(label);
 
-    TEmitter Leave(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Leave(label);
+    TEmitter Leave(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Leave(label);
 
     /// <summary>
     /// Returns from the current method, pushing a return value (if present) from the callee's evaluation stack onto the caller's evaluation stack.
@@ -723,9 +759,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brtrue?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brtrue_s?view=netcore-3.0"/>
-    TEmitter Brtrue(Label label)
+    TEmitter Brtrue(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Brtrue_S, label);
         return Emit(OpCodes.Brtrue, label);
     }
@@ -736,9 +772,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form<see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brtrue_s?view=netcore-3.0"/>
-    TEmitter Brtrue_S(Label label) => Brtrue(label);
+    TEmitter Brtrue_S(EmitterLabel label) => Brtrue(label);
 
-    TEmitter Brtrue(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Brtrue(label);
+    TEmitter Brtrue(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Brtrue(label);
     #endregion
     #region False
     /// <summary>
@@ -747,9 +783,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brfalse?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brfalse_s?view=netcore-3.0"/>
-    TEmitter Brfalse(Label label)
+    TEmitter Brfalse(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Brfalse_S, label);
         return Emit(OpCodes.Brfalse, label);
     }
@@ -760,9 +796,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form<see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.brfalse_s?view=netcore-3.0"/>
-    TEmitter Brfalse_S(Label label) => Brfalse(label);
+    TEmitter Brfalse_S(EmitterLabel label) => Brfalse(label);
 
-    TEmitter Brfalse(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Brfalse(label);
+    TEmitter Brfalse(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Brfalse(label);
     #endregion
     #region ==
     /// <summary>
@@ -771,9 +807,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.beq?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.beq_s?view=netcore-3.0"/>
-    TEmitter Beq(Label label)
+    TEmitter Beq(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Beq_S, label);
         return Emit(OpCodes.Beq, label);
     }
@@ -784,9 +820,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.beq_s?view=netcore-3.0"/>
-    TEmitter Beq_S(Label label) => Beq(label);
+    TEmitter Beq_S(EmitterLabel label) => Beq(label);
 
-    TEmitter Beq(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Beq(label);
+    TEmitter Beq(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Beq(label);
     #endregion
     #region !=
     /// <summary>
@@ -795,9 +831,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bne_un?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bne_un_s?view=netcore-3.0"/>
-    TEmitter Bne_Un(Label label)
+    TEmitter Bne_Un(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Bne_Un_S, label);
         return Emit(OpCodes.Bne_Un, label);
     }
@@ -808,9 +844,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bne_un_s?view=netcore-3.0"/>
-    TEmitter Bne_Un_S(Label label) => Bne_Un(label);
+    TEmitter Bne_Un_S(EmitterLabel label) => Bne_Un(label);
 
-    TEmitter Bne_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bne_Un(label);
+    TEmitter Bne_Un(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bne_Un(label);
     #endregion
     #region >=
     /// <summary>
@@ -819,9 +855,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_s?view=netcore-3.0"/>
-    TEmitter Bge(Label label)
+    TEmitter Bge(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Bge_S, label);
         return Emit(OpCodes.Bge, label);
     }
@@ -832,9 +868,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_s?view=netcore-3.0"/>
-    TEmitter Bge_S(Label label) => Bge(label);
+    TEmitter Bge_S(EmitterLabel label) => Bge(label);
 
-    TEmitter Bge(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bge(label);
+    TEmitter Bge(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bge(label);
 
 
     /// <summary>
@@ -843,9 +879,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_un?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_un_s?view=netcore-3.0"/>
-    TEmitter Bge_Un(Label label)
+    TEmitter Bge_Un(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Bge_Un_S, label);
         return Emit(OpCodes.Bge_Un, label);
     }
@@ -856,9 +892,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bge_un_s?view=netcore-3.0"/>
-    TEmitter Bge_Un_S(Label label) => Bge_Un(label);
+    TEmitter Bge_Un_S(EmitterLabel label) => Bge_Un(label);
 
-    TEmitter Bge_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bge_Un(label);
+    TEmitter Bge_Un(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bge_Un(label);
     #endregion
     #region >
     /// <summary>
@@ -867,9 +903,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_s?view=netcore-3.0"/>
-    TEmitter Bgt(Label label)
+    TEmitter Bgt(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Bgt_S, label);
         return Emit(OpCodes.Bgt, label);
     }
@@ -880,9 +916,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_s?view=netcore-3.0"/>
-    TEmitter Bgt_S(Label label) => Bgt(label);
+    TEmitter Bgt_S(EmitterLabel label) => Bgt(label);
 
-    TEmitter Bgt(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bgt(label);
+    TEmitter Bgt(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bgt(label);
 
 
     /// <summary>
@@ -891,9 +927,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_un?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_un_s?view=netcore-3.0"/>
-    TEmitter Bgt_Un(Label label)
+    TEmitter Bgt_Un(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Bgt_Un_S, label);
         return Emit(OpCodes.Bgt_Un, label);
     }
@@ -904,9 +940,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.bgt_un_s?view=netcore-3.0"/>
-    TEmitter Bgt_Un_S(Label label) => Bgt_Un(label);
+    TEmitter Bgt_Un_S(EmitterLabel label) => Bgt_Un(label);
 
-    TEmitter Bgt_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bgt_Un(label);
+    TEmitter Bgt_Un(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Bgt_Un(label);
     #endregion
     #region <=
     /// <summary>
@@ -915,9 +951,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_s?view=netcore-3.0"/>
-    TEmitter Ble(Label label)
+    TEmitter Ble(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Ble_S, label);
         return Emit(OpCodes.Ble, label);
     }
@@ -928,9 +964,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_s?view=netcore-3.0"/>
-    TEmitter Ble_S(Label label) => Ble(label);
+    TEmitter Ble_S(EmitterLabel label) => Ble(label);
 
-    TEmitter Ble(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Ble(label);
+    TEmitter Ble(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Ble(label);
 
 
     /// <summary>
@@ -939,9 +975,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_un?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_un_s?view=netcore-3.0"/>
-    TEmitter Ble_Un(Label label)
+    TEmitter Ble_Un(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Ble_Un_S, label);
         return Emit(OpCodes.Ble_Un, label);
     }
@@ -952,9 +988,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.ble_un_s?view=netcore-3.0"/>
-    TEmitter Ble_Un_S(Label label) => Ble_Un(label);
+    TEmitter Ble_Un_S(EmitterLabel label) => Ble_Un(label);
 
-    TEmitter Ble_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Ble_Un(label);
+    TEmitter Ble_Un(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Ble_Un(label);
     #endregion
     #region <
     /// <summary>
@@ -963,9 +999,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_s?view=netcore-3.0"/>
-    TEmitter Blt(Label label)
+    TEmitter Blt(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Blt_S, label);
         return Emit(OpCodes.Blt, label);
     }
@@ -976,9 +1012,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_s?view=netcore-3.0"/>
-    TEmitter Blt_S(Label label) => Blt(label);
+    TEmitter Blt_S(EmitterLabel label) => Blt(label);
 
-    TEmitter Blt(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Blt(label);
+    TEmitter Blt(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Blt(label);
 
 
     /// <summary>
@@ -987,9 +1023,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The <see cref="Label"/> to transfer to.</param>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_un?view=netcore-3.0"/>
     /// <seealso href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_un_s?view=netcore-3.0"/>
-    TEmitter Blt_Un(Label label)
+    TEmitter Blt_Un(EmitterLabel label)
     {
-        if (label.IsShortForm())
+        if (label.IsShortForm)
             return Emit(OpCodes.Blt_Un_S, label);
         return Emit(OpCodes.Blt_Un, label);
     }
@@ -1000,9 +1036,9 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     /// <param name="label">The short-form <see cref="Label"/> to transfer to.</param>
     /// <exception cref="ArgumentOutOfRangeException">If the <paramref name="label"/> does not qualify for short-form instructions.</exception>
     /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.reflection.emit.opcodes.blt_un_s?view=netcore-3.0"/>
-    TEmitter Blt_Un_S(Label label) => Blt_Un(label);
+    TEmitter Blt_Un_S(EmitterLabel label) => Blt_Un(label);
 
-    TEmitter Blt_Un(out Label label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Blt_Un(label);
+    TEmitter Blt_Un(out EmitterLabel label, [CallerArgumentExpression("label")] string lblName = "") => DefineLabel(out label, lblName).Blt_Un(label);
     #endregion
     #endregion
 
@@ -1669,7 +1705,7 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
             return Ldstr(str);
         if (value is Type type)
             return LoadType(type);
-        if (value is LocalBuilder local)
+        if (value is EmitterLocal local)
             return Ldloc(local);
 
         throw new NotImplementedException();

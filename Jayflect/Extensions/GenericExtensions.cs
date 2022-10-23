@@ -100,7 +100,7 @@ public static class GenericExtensions
             types.Add(interfaceType);
         }
         // Add base types
-        while (((type = type.BaseType) is not null))
+        while (((type = type?.BaseType) is not null))
         {
             types.Add(type);
         }
