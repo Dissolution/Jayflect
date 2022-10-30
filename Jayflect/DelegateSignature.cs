@@ -3,14 +3,68 @@ using Jayflect.Extensions;
 
 namespace Jayflect;
 
-public sealed class DelegateSignature : IEquatable<DelegateSignature>
+public class MethodSignature : DelegateSignature, IEquatable<MethodSignature>
+{
+    public static bool operator ==(MethodSignature left, MethodSignature right) => left.Equals(right);
+    public static bool operator !=(MethodSignature left, MethodSignature right) => !left.Equals(right);
+
+    public string Name => _method.Name;
+
+    public MethodSignature(MethodBase method)
+        : base(method, null) { }
+    
+    public override bool Matches(MethodBase? method)
+    {
+        if (method is null) return false;
+        if (method.ReturnType() != this.ReturnType) return false;
+        var methodParams = method.GetParameters();
+        if (methodParams.Length != ParameterCount) return false;
+        for (var i = 0; i < ParameterCount; i++)
+        {
+            if (methodParams[i].ParameterType != ParameterTypes[i]) return false;
+        }
+        return true;
+    }
+
+    public bool Equals(MethodSignature? methodSignature)
+    {
+        return methodSignature is not null &&
+               string.Equals(methodSignature.Name, this.Name) &&
+               methodSignature.ReturnType == this.ReturnType &&
+               MemoryExtensions.SequenceEqual<Type>(methodSignature.ParameterTypes, this.ParameterTypes);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is MethodSignature methodSignature) return Equals(methodSignature);
+        if (obj is DelegateSignature delegateSignature) return Equals(delegateSignature);
+        return false;
+    }
+    public override int GetHashCode()
+    {
+        var hasher = new HashCode();
+        hasher.Add(Name);
+        hasher.Add(ReturnType);
+        foreach (var parameterType in ParameterTypes)
+        {
+            hasher.Add(parameterType);
+        }
+        return hasher.ToHashCode();
+    }
+    public override string ToString()
+    {
+        return Dump($"{ReturnType} {Name}({ParameterTypes})");
+    }
+}
+
+public class DelegateSignature : IEquatable<DelegateSignature>
 {
     public static bool operator ==(DelegateSignature left, DelegateSignature right) => left.Equals(right);
     public static bool operator !=(DelegateSignature left, DelegateSignature right) => !left.Equals(right);
 
-    public static DelegateSignature For(MethodBase method)
+    public static MethodSignature For(MethodBase method)
     {
-        return new DelegateSignature(method, null);
+        return new MethodSignature(method);
     }
     public static DelegateSignature For<TDelegate>(TDelegate? @delegate = default)
         where TDelegate : Delegate
@@ -85,17 +139,15 @@ public sealed class DelegateSignature : IEquatable<DelegateSignature>
         return funcType.MakeGenericType(funcTypeArgs);
     }
     
-    private readonly MethodBase _method;
-    private Type? _delegateType;
-
-    internal MethodBase Method => _method;
-    internal ParameterInfo[] Parameters => _method.GetParameters();
+    protected readonly MethodBase _method;
+    protected Type? _delegateType;
     
     public Type ReturnType { get; }
+    public ParameterInfo[] Parameters => _method.GetParameters();
     public Type[] ParameterTypes { get; }
     public int ParameterCount => ParameterTypes.Length;
 
-    private DelegateSignature(MethodBase method, Type? delegateType)
+    protected DelegateSignature(MethodBase method, Type? delegateType)
     {
         _method = method;
         this.ReturnType = method.ReturnType();
@@ -108,7 +160,7 @@ public sealed class DelegateSignature : IEquatable<DelegateSignature>
         return (_delegateType ??= GetGenericDelegateType(this));
     }
     
-    public bool Matches(MethodBase? method)
+    public virtual bool Matches(MethodBase? method)
     {
         if (method is null) return false;
         if (method.ReturnType() != this.ReturnType) return false;

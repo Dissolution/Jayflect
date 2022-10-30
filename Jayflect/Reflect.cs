@@ -10,25 +10,25 @@ public static partial class Reflect
     public static class Flags
     {
         public const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic |
-                                       BindingFlags.Static | BindingFlags.Instance |
-                                       BindingFlags.IgnoreCase;
+                                        BindingFlags.Static | BindingFlags.Instance |
+                                        BindingFlags.IgnoreCase;
 
         public const BindingFlags Public = BindingFlags.Public |
-                                          BindingFlags.Static | BindingFlags.Instance |
-                                          BindingFlags.IgnoreCase;
+                                           BindingFlags.Static | BindingFlags.Instance |
+                                           BindingFlags.IgnoreCase;
 
         public const BindingFlags NonPublic = BindingFlags.NonPublic |
-                                             BindingFlags.Static | BindingFlags.Instance |
-                                             BindingFlags.IgnoreCase;
+                                              BindingFlags.Static | BindingFlags.Instance |
+                                              BindingFlags.IgnoreCase;
 
         public const BindingFlags Static = BindingFlags.Public | BindingFlags.NonPublic |
-                                          BindingFlags.Static |
-                                          BindingFlags.IgnoreCase;
+                                           BindingFlags.Static |
+                                           BindingFlags.IgnoreCase;
 
         public const BindingFlags Instance = BindingFlags.Public | BindingFlags.NonPublic |
-                                            BindingFlags.Instance |
-                                            BindingFlags.IgnoreCase;
-        
+                                             BindingFlags.Instance |
+                                             BindingFlags.IgnoreCase;
+
         public const BindingFlags PublicStatic = BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase;
 
         public const BindingFlags NonPublicStatic = BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.IgnoreCase;
@@ -39,7 +39,7 @@ public static partial class Reflect
     }
 
     private static HashSet<Type>? _allTypes;
-    
+
     public static IReadOnlySet<Type> AllExportedTypes
     {
         get
@@ -99,40 +99,38 @@ public static partial class Reflect
             if (expr is ConstantExpression constantExpression)
                 return constantExpression.Value;
             throw new NotImplementedException();
-            
+
         }).ToList();
         var methodParams = method.GetParameters();
         if (methodArgs.Count != methodParams.Length)
             Debugger.Break();
 
         DumpStringHandler stringHandler = new();
-        stringHandler.AppendLiteral("Could not find ");
-        stringHandler.AppendFormatted(typeof(TMember));
-        stringHandler.AppendLiteral(":");
-        stringHandler.AppendLiteral(Environment.NewLine);
-        stringHandler.AppendFormatted(method.OwnerType());
-        stringHandler.AppendLiteral(".");
-        stringHandler.AppendLiteral(method.Name);
-        stringHandler.AppendLiteral("(");
-        for (var i = 0; i < methodParams.Length; i++)
-        {
-            if (i > 0) stringHandler.AppendLiteral(",");
-            var methodParam = methodParams[i];
-            stringHandler.AppendFormatted(methodParam.ParameterType);
-            stringHandler.AppendLiteral(" ");
-            stringHandler.AppendLiteral(methodParam.Name ?? "?");
-            stringHandler.AppendLiteral(" = ");
-            stringHandler.AppendFormatted(methodArgs[i]);
-        }
-        stringHandler.AppendLiteral(")");
-        stringHandler.AppendLiteral(Environment.NewLine);
+        stringHandler.Write("Could not find ");
+        stringHandler.Dump(typeof(TMember));
+        stringHandler.Write(":");
+        stringHandler.Write(Environment.NewLine);
+        stringHandler.Dump(method.OwnerType());
+        stringHandler.Write(".");
+        stringHandler.Write(method.Name);
+        stringHandler.Write("(");
+        stringHandler.DumpDelimited(", ", methodParams);
+        stringHandler.Write(")");
+        stringHandler.Write(Environment.NewLine);
 
-        throw new ReflectionException(ref stringHandler, exception);
+        throw new JayflectException(ref stringHandler, exception);
     }
 
     public static TMember FindMember<TMember>(Expression<Func<object?>> memberExpression)
         where TMember : MemberInfo
     {
+        var member = memberExpression.ExtractMember<TMember>();
+        if (member is not null)
+            return member;
+        var desc = memberExpression.SelfAndDescendants().ToList();
+        var values = desc
+            .SelectMany(expr => expr.ExtractValues<TMember>())
+            .ToList();
         throw new NotImplementedException();
     }
 
@@ -145,7 +143,7 @@ public static partial class Reflect
     {
         return FindConstructor(instanceType, Array.ConvertAll(arguments, arg => arg.GetType()));
     }
-    
+
     public static ConstructorInfo FindConstructor(Type instanceType, params Type[] argTypes)
     {
         ConstructorInfo? constructor = instanceType
@@ -153,7 +151,26 @@ public static partial class Reflect
             .FirstOrDefault(ctor => MemoryExtensions.SequenceEqual<Type>(ctor.GetParameterTypes(), argTypes));
         if (constructor is not null)
             return constructor;
-        throw new ReflectionException($"Could not find constructor that matched {instanceType}({argTypes})");
+        throw new JayflectException($"Could not find constructor that matched {instanceType}({argTypes})");
+    }
+
+    public static FieldInfo FindField(Type ownerType, string name, BindingFlags flags, Type? fieldType)
+    {
+        var field = ownerType.GetField(name, flags);
+        if (field is null)
+            throw new JayflectException($"Could not find {flags:I} field {ownerType}.{name}");
+        if (fieldType is not null && field.FieldType != fieldType)
+            throw new JayflectException($"Field {field} does not contain a {fieldType}");
+        return field;
+    }
+
+    public static PropertyInfo FindProperty(Type ownerType, string name, BindingFlags flags, Type? propertyType)
+    {
+        var property = ownerType.GetProperty(name, flags, null, propertyType, Type.EmptyTypes, null);
+        if (property is null)
+            throw new JayflectException($"Could not find {flags:I} {propertyType} property {ownerType}.{name}");
+        Debug.Assert(propertyType is null || propertyType == property.PropertyType);
+        return property;
     }
 }
 

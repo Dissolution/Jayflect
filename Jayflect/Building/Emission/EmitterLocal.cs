@@ -74,7 +74,7 @@ public sealed class EmitterLocal : IEquatable<EmitterLocal>, IEquatable<LocalBui
         return Index;
     }
 
-    public void DumpTo(ref DefaultInterpolatedStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
     {
         // Declare or Use, defaults to Use
         if (dumpFormat == "D")

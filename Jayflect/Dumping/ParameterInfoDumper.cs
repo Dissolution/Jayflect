@@ -5,11 +5,11 @@ namespace Jayflect.Dumping;
 
 public sealed class ParameterInfoDumper : Dumper<ParameterInfo>
 {
-    protected override void DumpValueImpl(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] ParameterInfo parameter, DumpFormat dumpFormat)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] ParameterInfo parameter, DumpFormat format)
     {
-        stringHandler.Dump(parameter.ParameterType, dumpFormat);
+        stringHandler.Dump(parameter.ParameterType, format);
         stringHandler.Write(' ');
-        stringHandler.Write(parameter.Name);
+        stringHandler.Write(parameter.Name ?? "?");
         if (parameter.HasDefaultValue)
         {
             stringHandler.Write(" = ");

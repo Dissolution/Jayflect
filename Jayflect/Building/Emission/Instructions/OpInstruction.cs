@@ -66,7 +66,7 @@ public sealed class OpInstruction : Instruction
                DefaultComparers.Instance.Equals(opInstruction.Value, this.Value);
     }
 
-    public override void DumpTo(ref DefaultInterpolatedStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public override void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
     {
         stringHandler.Write(OpCode.Name);
         if (Value is not null)

@@ -84,6 +84,12 @@ public static class TypeExtensions
                && !type.IsNestedFamORAssem
                && !type.IsNestedFamANDAssem;
     }
+
+    public static bool HasDefaultConstructor(this Type type, [NotNullWhen(true)] out ConstructorInfo? defaultCtor)
+    {
+        defaultCtor = type.GetConstructor(Reflect.Flags.Instance, Type.EmptyTypes);
+        return defaultCtor is not null;
+    }
     
     //public static Type OwnerType(this Type type) => type.ReflectedType ?? type.DeclaringType ?? type.Module.GetType();
 

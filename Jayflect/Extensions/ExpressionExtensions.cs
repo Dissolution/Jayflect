@@ -276,6 +276,10 @@ public static class ExpressionExtensions
                     yield return value;
                 }
 
+                if (methodCallExpression.Method is T returnValue)
+                {
+                    yield return returnValue;
+                }
                 break;
             }
             case NewArrayExpression newArrayExpression:

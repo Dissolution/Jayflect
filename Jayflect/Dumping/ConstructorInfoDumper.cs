@@ -5,9 +5,9 @@ namespace Jayflect.Dumping;
 
 public sealed class ConstructorInfoDumper : Dumper<ConstructorInfo>
 {
-    protected override void DumpValueImpl(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] ConstructorInfo ctor, DumpFormat dumpFormat)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] ConstructorInfo ctor, DumpFormat format)
     {
-        stringHandler.Dump(ctor.DeclaringType!, dumpFormat);
+        stringHandler.Dump(ctor.DeclaringType!, format);
         stringHandler.Write(".ctor(");
         var parameters = ctor.GetParameters();
         stringHandler.DumpDelimited<ParameterInfo>(", ", parameters);

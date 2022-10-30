@@ -3,53 +3,53 @@ using Jay.Extensions;
 
 namespace Jay.Dumping;
 
-public abstract class Dumper<T> : Dumper
+public abstract class Dumper<T> : Dumper, IDumper<T>
 {
-    public sealed override bool CanDump(Type type) => type.Implements<T>();
+    public override bool CanDump(Type type) => type.Implements<T>();
 
-    internal sealed override void DumpObject(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] object obj, DumpFormat dumpFormat)
+    public override void DumpTo(ref DumpStringHandler dumpHandler, object? obj, DumpFormat dumpFormat = default)
     {
+        if (obj is null)
+        {
+            return;
+        }
         if (obj is T value)
         {
-            DumpValue(ref stringHandler, value, dumpFormat);
+            DumpTo(ref dumpHandler, value, dumpFormat);
+            return;
         }
+        // *weird* issues
+        // try
+        // {
+        //     value = (T)obj;
+        //     Dump(ref stringHandler, value, dumpFormat);
+        //     Debug.WriteLine($"Had to force object to {typeof(T).Name}");
+        //     return;
+        // }
+        // catch (Exception ex)
+        // {
+        //     // ignored
+        //     Debug.WriteLine($"Object forcing failed: {ex}");
+        // }
+
         throw new ArgumentException($"The given object '{obj}' is not a {typeof(T)} value");
     }
     
-    protected abstract void DumpValueImpl(ref DefStringHandler stringHandler, [NotNull] T value, DumpFormat dumpFormat);
-
-    protected bool WroteNull(ref DefStringHandler stringHandler, [AllowNull, NotNullWhen(false)] T value, DumpFormat dumpFormat)
+    protected abstract void DumpImpl(ref DumpStringHandler dumpHandler, [NotNull] T value, DumpFormat format);
+  
+    public void DumpTo(ref DumpStringHandler dumpHandler, T? value, DumpFormat dumpFormat = default)
     {
-        if (value is null)
-        {
-            if (dumpFormat == DumpFormat.View)
-            {
-                stringHandler.Write("null");
-            }
-            else if (dumpFormat >= DumpFormat.Inspect)
-            {
-                stringHandler.Write("(");
-                stringHandler.Dump(typeof(T));
-                stringHandler.Write(")null");
-            }
-            return true;
-        }
-        return false;
-    }
-    
-    public void DumpValue(ref DefStringHandler stringHandler, T? value, DumpFormat dumpFormat = default)
-    {
-        if (WroteNull(ref stringHandler, value, dumpFormat)) return;
+        if (DumpedNull(ref dumpHandler, value, dumpFormat)) return;
 
         if (dumpFormat.IsCustom)
         {
             // pass-through
-            stringHandler.AppendFormatted<T>(value, dumpFormat.GetCustomFormatString());
+            dumpHandler.AppendFormatted<T>(value, dumpFormat.GetCustomFormatString());
         }
         else
         {
             // call the implementation
-            this.DumpValueImpl(ref stringHandler, value, dumpFormat);
+            this.DumpImpl(ref dumpHandler, value, dumpFormat);
         }
     }
 

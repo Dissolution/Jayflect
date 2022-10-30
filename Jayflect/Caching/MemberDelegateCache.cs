@@ -32,7 +32,7 @@ public static class MemberDelegateCache
         var del = _cache.GetOrAdd(key, createDelegate(key));
         if (del is not TDelegate typedDelegate)
         {
-            throw new ReflectionException($"An existing delegate with a signature was encountered");
+            throw new JayflectException($"An existing delegate with a signature was encountered");
         }
         return typedDelegate;
     }
@@ -45,7 +45,7 @@ public static class MemberDelegateCache
         var del = _cache.GetOrAdd(key, createDelegate(member));
         if (del is not TDelegate typedDelegate)
         {
-            throw new ReflectionException($"An existing delegate with a signature was encountered");
+            throw new JayflectException($"An existing delegate with a signature was encountered");
         }
         return typedDelegate;
     }

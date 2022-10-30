@@ -6,13 +6,21 @@ namespace Jayflect.Dumping;
 
 public sealed class MethodBaseDumper : Dumper<MethodBase>
 {
-    protected override void DumpValueImpl(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] MethodBase method, DumpFormat dumpFormat)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] MethodBase method, DumpFormat format)
     {
-        stringHandler.Dump(method.ReturnType(), dumpFormat);
-        stringHandler.Write(' ');
-        if (dumpFormat > DumpFormat.View)
+        if (format >= DumpFormat.Inspect)
         {
-            stringHandler.Dump(method.OwnerType(), dumpFormat);
+            stringHandler.Write(method.Visibility());
+            stringHandler.Write(' ');
+            if (method.IsStatic)
+                stringHandler.Write("static ");
+        }
+        
+        stringHandler.Dump(method.ReturnType(), format);
+        stringHandler.Write(' ');
+        if (format > DumpFormat.View)
+        {
+            stringHandler.Dump(method.OwnerType(), format);
             stringHandler.Write('.');
         }
         stringHandler.Write(method.Name);

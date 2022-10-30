@@ -21,7 +21,7 @@ public class InstructionStream : LinkedList<InstructionLine>, IDumpable
         return null;
     }
 
-    public void DumpTo(ref DefaultInterpolatedStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
     {
         stringHandler.DumpDelimited(Environment.NewLine, this, dumpFormat);
     }

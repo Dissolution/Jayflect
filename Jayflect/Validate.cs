@@ -1,4 +1,5 @@
 ﻿using Jay.Extensions;
+using Jayflect.Extensions;
 
 namespace Jayflect;
 
@@ -49,6 +50,18 @@ internal static class Validate
         if (!type.IsClass && !type.IsInterface)
         {
             throw new ArgumentException(Dump($"The given type '{type}' must be a class or interface type"), typeParamName);
+        }
+    }
+    
+    public static void IsStaticType([AllowNull, NotNull] Type? type, [CallerArgumentExpression(nameof(type))] string? typeParamName = null)
+    {
+        if (type is null)
+        {
+            throw new ArgumentNullException(typeParamName);
+        }
+        if (!type.IsStatic())
+        {
+            throw new ArgumentException(Dump($"The given type '{type}' must be a static type"), typeParamName);
         }
     }
 }

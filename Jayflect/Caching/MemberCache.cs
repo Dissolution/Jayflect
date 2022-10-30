@@ -11,12 +11,28 @@ public static class MemberCache
 {
     internal static class Methods
     {
-        public static MethodInfo Type_GetTypeFromHandle { get; } = Reflect.FindMember<MethodInfo>(() => Type.GetTypeFromHandle(default));
+        public static MethodInfo Type_GetTypeFromHandle { get; } = 
+            Reflect.FindMember<MethodInfo>(() => Type.GetTypeFromHandle(default));
 
         public static MethodInfo Delegate_GetInvocationList { get; } =
             typeof(Delegate).GetMethod(
                     nameof(Delegate.GetInvocationList),
-                    BindingFlags.Public | BindingFlags.Instance)
+                    BindingFlags.Public | BindingFlags.Instance,
+                    Type.EmptyTypes)
+                .ValidateNotNull();
+
+        public static MethodInfo RuntimeHelpers_GetUninitializedObject { get; } =
+            typeof(RuntimeHelpers).GetMethod(
+                    nameof(RuntimeHelpers.GetUninitializedObject),
+                    BindingFlags.Public | BindingFlags.Static,
+                    new Type[1] { typeof(Type)})
+                .ValidateNotNull();
+
+        public static MethodInfo Object_GetType { get; } =
+            typeof(object).GetMethod(
+                    nameof(object.GetType),
+                    BindingFlags.Public | BindingFlags.Instance,
+                    Type.EmptyTypes)
                 .ValidateNotNull();
     }
     
@@ -27,7 +43,7 @@ public static class MemberCache
     {
         var memberInfo = _stringMemberCache.GetOrAdd(key, newMember);
         if (memberInfo is TMember member) return member;
-        throw new ReflectionException($"There is an {memberInfo.GetType()} defined for \"{key}\" when a {typeof(TMember)} was requested");
+        throw new JayflectException($"There is an {memberInfo.GetType()} defined for \"{key}\" when a {typeof(TMember)} was requested");
     }
     
     public static TMember GetOrAdd<TMember>(string key, Func<TMember> newMember)
@@ -35,6 +51,6 @@ public static class MemberCache
     {
         var memberInfo = _stringMemberCache.GetOrAdd(key, _ => newMember());
         if (memberInfo is TMember member) return member;
-        throw new ReflectionException($"There is an {memberInfo.GetType()} defined for \"{key}\" when a {typeof(TMember)} was requested");
+        throw new JayflectException($"There is an {memberInfo.GetType()} defined for \"{key}\" when a {typeof(TMember)} was requested");
     }
 }

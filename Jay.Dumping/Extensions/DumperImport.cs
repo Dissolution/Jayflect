@@ -15,26 +15,26 @@ public static class DumperImport
         int len = span.Length;
         if (len == 0) return "";
         var dumper = DumperCache.GetDumper<T>();
-        DefStringHandler stringHandler = new();
-        dumper.DumpValue(ref stringHandler, span[0], dumpFormat);
+        DumpStringHandler stringHandler = new();
+        dumper.DumpTo(ref stringHandler, span[0], dumpFormat);
         for (var i = 1; i < len; i++)
         {
             stringHandler.AppendLiteral(",");
-            dumper.DumpValue(ref stringHandler, span[i], dumpFormat);
+            dumper.DumpTo(ref stringHandler, span[i], dumpFormat);
         }
-        return stringHandler.ToStringAndClear();
+        return stringHandler.ToStringAndDispose();
     }
     
     public static string Dump<T>(T? value, DumpFormat dumpFormat = default)
     {
         var dumper = DumperCache.GetDumper<T>();
-        DefStringHandler stringHandler = new();
-        dumper.DumpValue(ref stringHandler, value, dumpFormat);
-        return stringHandler.ToStringAndClear();
+        DumpStringHandler stringHandler = new();
+        dumper.DumpTo(ref stringHandler, value, dumpFormat);
+        return stringHandler.ToStringAndDispose();
     }
     
     public static string Dump(ref DumpStringHandler stringHandler)
     {
-        return stringHandler.ToStringAndClear();
+        return stringHandler.ToStringAndDispose();
     }
 }

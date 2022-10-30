@@ -118,7 +118,7 @@ public sealed class GeneratorInstruction : Instruction
                DefaultComparers.Instance.Equals(generatorInstruction.Argument, this.Argument);
     }
 
-    public override void DumpTo(ref DefaultInterpolatedStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public override void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
     {
         switch (this.IlGeneratorMethod)
         {

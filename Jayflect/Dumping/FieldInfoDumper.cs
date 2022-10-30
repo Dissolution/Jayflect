@@ -6,13 +6,13 @@ namespace Jayflect.Dumping;
 
 public sealed class FieldInfoDumper : Dumper<FieldInfo>
 {
-    protected override void DumpValueImpl(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] FieldInfo field, DumpFormat dumpFormat)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] FieldInfo field, DumpFormat format)
     {
-        stringHandler.Dump(field.FieldType, dumpFormat);
+        stringHandler.Dump(field.FieldType, format);
         stringHandler.Write(' ');
-        if (dumpFormat > DumpFormat.View)
+        if (format > DumpFormat.View)
         {
-            stringHandler.Dump(field.OwnerType(), dumpFormat);
+            stringHandler.Dump(field.OwnerType(), format);
             stringHandler.Write('.');
         }
         stringHandler.Write(field.Name);

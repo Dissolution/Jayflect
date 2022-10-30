@@ -66,7 +66,7 @@ public sealed class EmitterLabel : IEquatable<EmitterLabel>, IEquatable<Label>, 
         return Value;
     }
 
-    public void DumpTo(ref DefaultInterpolatedStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
     {
         // Mark (where the label is)
         if (dumpFormat == "M")

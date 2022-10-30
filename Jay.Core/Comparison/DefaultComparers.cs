@@ -7,15 +7,7 @@ using Jay.Validation;
 
 namespace Jay.Comparison;
 
-public interface IEqualityComparers<in T> : IEqualityComparer<T>, IEqualityComparer
-{
-    
-}
 
-public interface IComparers<in T> : IComparer<T>, IComparer
-{
-    
-}
 
 public sealed class DefaultComparers : IEqualityComparer<object?>, IEqualityComparer, 
                                        IComparer<object?>, IComparer

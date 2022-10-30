@@ -3,7 +3,11 @@
 public readonly ref struct DumpFormat
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator DumpFormat(ReadOnlySpan<char> format) => new DumpFormat(format);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DumpFormat(string? format) => new DumpFormat(format);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator ReadOnlySpan<char>(DumpFormat format) => format._formatSpan;
 
     public static bool operator ==(DumpFormat left, DumpFormat right) => left.Equals(right);
     public static bool operator !=(DumpFormat left, DumpFormat right) => !left.Equals(right);
@@ -62,7 +66,7 @@ public readonly ref struct DumpFormat
     public bool IsCustom
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _formatSpan.Length > 0 && _formatSpan[0] is not 'V' or 'I' or 'A';
+        get => _formatSpan.Length > 0 && _formatSpan[0] != 'V' && _formatSpan[0] != 'I' && _formatSpan[0] != 'A';
     }
 
     public bool IsView

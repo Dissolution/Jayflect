@@ -1,13 +1,21 @@
 ﻿namespace Jay.Dumping;
 
+[DumpOptions(Priority = 100)]
 internal sealed class ObjectDumper : Dumper<object>
 {
-    protected override void DumpValueImpl(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] object obj, DumpFormat dumpFormat)
+    public override bool CanDump(Type type)
+    {
+        // Everything implements object,
+        // so we need to overwrite the default behavior here
+        return type == typeof(object);
+    }
+
+    protected override void DumpImpl(ref DumpStringHandler dumpHandler, [NotNull] object obj, DumpFormat format)
     {
         // Get the dumper for the object's type
         var objType = obj.GetType();
         var dumper = DumperCache.GetDumper(objType);
-        // Use it's object-based implementation
-        dumper.DumpObject(ref stringHandler, obj, dumpFormat);
+        // Use its object-based implementation
+        dumper.DumpTo(ref dumpHandler, obj, format);
     }
 }

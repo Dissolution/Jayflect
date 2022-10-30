@@ -1719,20 +1719,45 @@ public interface IFluentILEmitter<TEmitter> : IFluentILGenerator<TEmitter>, IFlu
     TEmitter LoadType<T>() => LoadType(typeof(T));
 
 
+    /// <summary>
+    /// Loads the default value of a <paramref name="type"/> onto the stack, exactly like default(Type)
+    /// </summary>
     TEmitter LoadDefault(Type type)
     {
+        // Value types require more code
         if (type.IsValueType)
         {
-            // Can I just ldc_i4_0 and conv?
-
             return DeclareLocal(type, out var defaultValue)
                 .Ldloca(defaultValue)
                 .Initobj(type)
                 .Ldloc(defaultValue);
         }
+        // Anything else defaults to null
         return Ldnull();
     }
     TEmitter LoadDefault<T>() => LoadDefault(typeof(T));
+
+    TEmitter LoadDefaultAddress(Type type)
+    {
+        // Value types require more code
+        if (type.IsValueType)
+        {
+            return DeclareLocal(type, out var defaultValue)
+                .Ldloca(defaultValue)
+                .Initobj(type)
+                .Ldloca(defaultValue);
+        }
+        // Anything else defaults to null
+        return Ldnulla();
+    }
+    
+    TEmitter LoadDefaultAddress<T>() => LoadDefaultAddress(typeof(T));
+
+
+    /// <summary>
+    /// Loads a <c>null</c> reference onto the stack
+    /// </summary>
+    TEmitter Ldnulla() => Ldc_I4_0().Conv_U();
     #endregion
 
     #region Arrays

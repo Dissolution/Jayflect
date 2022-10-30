@@ -1,25 +1,16 @@
-﻿using Jay.Validation;
+﻿using System.Diagnostics;
+using Jay.Validation;
 using Jayflect.Building;
+using Jayflect.Building.Adaption;
 using Jayflect.Building.Emission;
 using Jayflect.Caching;
+using Jayflect.Exceptions;
 using Jayflect.Extensions;
 
 namespace Jayflect;
 
-
 public static partial class Reflect
 {
-
-    private static SetValue<TInstance, TValue> CreateSetValue<TInstance, TValue>(FieldInfo field)
-    {
-        return RuntimeBuilder.CreateDelegate<SetValue<TInstance, TValue>>($"set_{field.Name}",
-            builder => builder.Emitter
-                .EmitLoadInstance(builder.Parameters[0], field)
-                .EmitLoadParameter(builder.Parameters[1], field.FieldType)
-                .Stfld(field)
-                .Ret());
-    }
-    
     private static GetValue<TInstance, TValue> CreateGetValue<TInstance, TValue>(FieldInfo field)
     {
         return RuntimeBuilder.CreateDelegate<GetValue<TInstance, TValue>>($"get_{field.Name}",
@@ -30,19 +21,41 @@ public static partial class Reflect
                 .Ret());
     }
 
-    public static void SetValue<TInstance, TValue>(this FieldInfo fieldInfo,
-        ref TInstance instance, TValue value)
+    internal static GetValue<TInstance, TValue> GetGetValue<TInstance, TValue>(FieldInfo fieldInfo)
     {
-        var setValue = MemberDelegateCache.GetOrAdd(fieldInfo, CreateSetValue<TInstance, TValue>);
-        setValue(ref instance, value);
+        return MemberDelegateCache.GetOrAdd(fieldInfo, CreateGetValue<TInstance, TValue>);
     }
+
     public static TValue GetValue<TInstance, TValue>(this FieldInfo fieldInfo,
         ref TInstance instance)
     {
-        var getValue = MemberDelegateCache.GetOrAdd(fieldInfo, CreateGetValue<TInstance, TValue>);
-        return getValue(ref instance);
+        return GetGetValue<TInstance, TValue>(fieldInfo)(ref instance);
+    }
+    
+    private static SetValue<TInstance, TValue> CreateSetValue<TInstance, TValue>(FieldInfo field)
+    {
+        return RuntimeBuilder.CreateDelegate<SetValue<TInstance, TValue>>($"set_{field.Name}",
+            builder => builder.Emitter
+                .EmitLoadInstance(builder.Parameters[0], field)
+                .EmitLoadParameter(builder.Parameters[1], field.FieldType)
+                .Stfld(field)
+                .Ret());
     }
 
+    internal static SetValue<TInstance, TValue> GetSetValue<TInstance, TValue>(FieldInfo field)
+    {
+        return MemberDelegateCache.GetOrAdd(field, CreateSetValue<TInstance, TValue>);
+    }
+
+    public static void SetValue<TInstance, TValue>(this FieldInfo fieldInfo,
+        ref TInstance instance, TValue value)
+    {
+        GetSetValue<TInstance, TValue>(fieldInfo)(ref instance, value);
+    }
+}
+
+public static partial class Reflect
+{
     private static SetValue<TInstance, TValue> CreateSetValue<TInstance, TValue>(PropertyInfo property)
     {
         // Find setter
@@ -52,12 +65,24 @@ public static partial class Reflect
             var backingField = property.GetBackingField();
             if (backingField is not null)
                 return CreateSetValue<TInstance, TValue>(backingField);
-            throw new AdapterException($"Cannot find a Setter");
+            throw new JayflectException($"Cannot find a way to set {property}");
         }
 
         return RuntimeMethodAdapter.Adapt<SetValue<TInstance, TValue>>(setter);
     }
-    
+
+    internal static SetValue<TInstance, TValue> GetSetValue<TInstance, TValue>(PropertyInfo propertyInfo)
+    {
+        return MemberDelegateCache.GetOrAdd(propertyInfo, CreateSetValue<TInstance, TValue>);
+    }
+
+
+    public static void SetValue<TInstance, TValue>(this PropertyInfo propertyInfo,
+        ref TInstance instance, TValue value)
+    {
+        GetSetValue<TInstance, TValue>(propertyInfo)(ref instance, value);
+    }
+
     private static GetValue<TInstance, TValue> CreateGetValue<TInstance, TValue>(PropertyInfo property)
     {
         // Find getter
@@ -67,26 +92,26 @@ public static partial class Reflect
             var backingField = property.GetBackingField();
             if (backingField is not null)
                 return CreateGetValue<TInstance, TValue>(backingField);
-            throw new AdapterException($"Cannot find a Getter");
+            throw new JayflectException($"Cannot find a way to get {property}");
         }
 
         return RuntimeMethodAdapter.Adapt<GetValue<TInstance, TValue>>(getter);
     }
-    
-    public static void SetValue<TInstance, TValue>(this PropertyInfo propertyInfo,
-        ref TInstance instance, TValue value)
+
+    internal static GetValue<TInstance, TValue> GetGetValue<TInstance, TValue>(PropertyInfo propertyInfo)
     {
-        var setValue = MemberDelegateCache.GetOrAdd(propertyInfo, CreateSetValue<TInstance, TValue>);
-        setValue(ref instance, value);
+        return MemberDelegateCache.GetOrAdd(propertyInfo, CreateGetValue<TInstance, TValue>);
     }
-    
+
     public static TValue GetValue<TInstance, TValue>(this PropertyInfo propertyInfo,
         ref TInstance instance)
     {
-        var getValue = MemberDelegateCache.GetOrAdd(propertyInfo, CreateGetValue<TInstance, TValue>);
-        return getValue(ref instance);
+        return GetGetValue<TInstance, TValue>(propertyInfo)(ref instance);
     }
+}
 
+public static partial class Reflect
+{
     private static AddHandler<TInstance, THandler> CreateAddHandler<TInstance, THandler>(
         EventInfo eventInfo)
         where THandler : Delegate
@@ -100,7 +125,7 @@ public static partial class Reflect
             {
                 throw new NotImplementedException();
             }
-            throw new AdapterException($"Cannot find an Adder");
+            throw new JayflectException($"Cannot find a way to add to {eventInfo}");
         }
 
         return RuntimeMethodAdapter.Adapt<AddHandler<TInstance, THandler>>(adder);
@@ -128,7 +153,7 @@ public static partial class Reflect
             {
                 throw new NotImplementedException();
             }
-            throw new AdapterException($"Cannot find a Remover");
+            throw new JayflectException($"Cannot find a way to remove from {eventInfo}");
         }
 
         return RuntimeMethodAdapter.Adapt<RemoveHandler<TInstance, THandler>>(remover);
@@ -203,10 +228,12 @@ public static partial class Reflect
                        .Blt(doStart)
                    .MarkLabel(finished)
                        .Ret();
+
+                   string il = emitter.ToString()!;
+                   Debugger.Break();
                 });
         }
-        throw new AdapterException($"Cannot find a way to raise this event");
-        
+        throw new JayflectException($"Cannot find a way to raise {eventInfo}");
     }
 
     public static void RaiseHandler<TInstance>(this EventInfo eventInfo,
@@ -217,6 +244,8 @@ public static partial class Reflect
         raiseHandler(ref instance, eventArgs);
     }
 
+    
+    
     private static Construct<TInstance> CreateConstruct<TInstance>(ConstructorInfo ctor)
     {
         return RuntimeBuilder.CreateDelegate<Construct<TInstance>>($"construct_{ctor.OwnerType().Name}",
@@ -237,6 +266,8 @@ public static partial class Reflect
         return construct(args);
     }
 
+    
+    
     private static Invoke<TInstance, TReturn> CreateInvoke<TInstance, TReturn>(MethodBase method)
     {
         return RuntimeMethodAdapter.Adapt<Invoke<TInstance, TReturn>>(method);

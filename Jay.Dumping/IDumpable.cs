@@ -1,13 +1,43 @@
 ﻿namespace Jay.Dumping;
 
-public interface IDumpable
+public interface IDumpable : ISpanFormattable, IFormattable
 {
-    public string Dump(DumpFormat dumpFormat = default)
+    void DumpTo(ref DumpStringHandler dumpStringHandler, DumpFormat format = default);
+
+    bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
-        DefStringHandler stringHandler = new();
-        DumpTo(ref stringHandler, dumpFormat);
-        return stringHandler.ToStringAndClear();
+        var dumper = new DumpStringHandler(destination);
+        try
+        {
+            DumpTo(ref dumper, format);
+            if (dumper.Length > destination.Length)
+            {
+                charsWritten = 0;
+                destination.Clear();
+                return false;
+            }
+            charsWritten = dumper.Length;
+            return true;
+        }
+        finally
+        {
+            dumper.Dispose();
+        }
+    }
+    
+    string IFormattable.ToString(string? format, IFormatProvider? formatProvider)
+    {
+        var dumpHandler = new DumpStringHandler();
+        DumpTo(ref dumpHandler, format);
+        return dumpHandler.ToStringAndDispose();
     }
 
-    void DumpTo(ref DefStringHandler stringHandler, DumpFormat dumpFormat = default);
+    string Dump(DumpFormat dumpFormat = default)
+    {
+        var dumpHandler = new DumpStringHandler();
+        DumpTo(ref dumpHandler, dumpFormat);
+        return dumpHandler.ToStringAndDispose();
+    }
+
+    string? ToString() => Dump(null);
 }

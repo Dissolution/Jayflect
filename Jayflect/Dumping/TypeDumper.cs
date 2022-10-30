@@ -27,7 +27,7 @@ public sealed class TypeDumper : Dumper<Type>
         (typeof(void), "void"),
     };
 
-    protected override void DumpValueImpl(ref DefaultInterpolatedStringHandler stringHandler, [NotNull] Type type, DumpFormat dumpFormat)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] Type type, DumpFormat format)
     {
         Type? underType;
 
@@ -40,16 +40,16 @@ public sealed class TypeDumper : Dumper<Type>
 
         // Nullable<T>?
         underType = Nullable.GetUnderlyingType(type);
-        if (underType is not null && dumpFormat < DumpFormat.All)
+        if (underType is not null && format < DumpFormat.All)
         {
             // Shortcut to dumping base type, followed by ?
-            DumpValueImpl(ref stringHandler, underType, dumpFormat);
+            DumpImpl(ref stringHandler, underType, format);
             stringHandler.Write('?');
             return;
         }
 
         // un-detailed fast cache check
-        if (dumpFormat < DumpFormat.All)
+        if (format < DumpFormat.All)
         {
             foreach (var pair in _typeDumpCache)
             {
@@ -68,7 +68,7 @@ public sealed class TypeDumper : Dumper<Type>
             // $"{type}*"
             underType = type.GetElementType();
             Debug.Assert(underType != null);
-            DumpValueImpl(ref stringHandler, underType, dumpFormat);
+            DumpImpl(ref stringHandler, underType, format);
             stringHandler.Write('*');
             return;
         }
@@ -78,7 +78,7 @@ public sealed class TypeDumper : Dumper<Type>
             underType = type.GetElementType();
             Debug.Assert(underType != null);
             stringHandler.Write("ref ");
-            DumpValueImpl(ref stringHandler, underType, dumpFormat);
+            DumpImpl(ref stringHandler, underType, format);
             return;
         }
 
@@ -86,15 +86,15 @@ public sealed class TypeDumper : Dumper<Type>
         {
             underType = type.GetElementType();
             Debug.Assert(underType != null);
-            DumpValueImpl(ref stringHandler, underType, dumpFormat);
+            DumpImpl(ref stringHandler, underType, format);
             stringHandler.Write("[]");
             return;
         }
 
         // Nested Type?
-        if (dumpFormat > DumpFormat.View && (type.IsNested && !type.IsGenericParameter))
+        if (format > DumpFormat.View && (type.IsNested && !type.IsGenericParameter))
         {
-            DumpValueImpl(ref stringHandler, type.DeclaringType!, dumpFormat);
+            DumpImpl(ref stringHandler, type.DeclaringType!, format);
             stringHandler.Write('.');
         }
 
@@ -126,7 +126,7 @@ public sealed class TypeDumper : Dumper<Type>
         var i = typeName.IndexOf('`');
         stringHandler.Write(i >= 0 ? typeName[..i] : typeName);
         stringHandler.Write('<');
-        stringHandler.DumpDelimited<Type>(", ", type.GetGenericArguments(), dumpFormat);
+        stringHandler.DumpDelimited<Type>(", ", type.GetGenericArguments(), format);
         stringHandler.Write('>');
     }
 }

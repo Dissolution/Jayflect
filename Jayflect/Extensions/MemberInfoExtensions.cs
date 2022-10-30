@@ -1,4 +1,6 @@
-﻿namespace Jayflect.Extensions;
+﻿using System.Diagnostics;
+
+namespace Jayflect.Extensions;
 
 public static class MemberInfoExtensions
 {
@@ -6,44 +8,39 @@ public static class MemberInfoExtensions
     {
         return memberInfo.ReflectedType ?? memberInfo.DeclaringType ?? memberInfo.Module.GetType();
     }
-
-    /*
-    internal static Result TryGetInstanceType(this MemberInfo? memberInfo, [NotNullWhen(true)] out Type? instanceType)
+    
+    public static bool TryGetInstanceType(this MemberInfo member, [NotNullWhen(true)] out Type? instanceType)
     {
-        if (memberInfo is null)
+        if (member.IsStatic())
         {
-            instanceType = default;
-            return new ArgumentNullException(nameof(memberInfo));
+            // static methods have no instance
+            instanceType = null;
+            return false;
         }
-
-        if (memberInfo.IsStatic())
-        {
-            instanceType = default;
-            return new ArgumentException("The given member is static or belongs to a static instance",
-                                         nameof(memberInfo));
-        }
-
-        instanceType = memberInfo.OwnerType();
+        
+        // Check first for reflected base type, then declared
+        instanceType = member.ReflectedType ?? member.DeclaringType;
         if (instanceType is null)
         {
-            return new ArgumentException("The given member does not have a ReflectedType nor DeclaringType",
-                                         nameof(memberInfo));
+            // No valid instance type?
+            throw new InvalidOperationException();
         }
-
-        if (instanceType.IsStatic())
+        
+        if (instanceType.IsStatic() || instanceType.IsByRef || instanceType.IsByRefLike)
         {
-            return new ArgumentException("The given member is static or belongs to a static instance",
-                                         nameof(memberInfo));
+            // Possible?
+            Debugger.Break();
         }
 
-        // We want ref instance for structs
         if (instanceType.IsValueType)
         {
+            // We want to load a ref to any structs (otherwise we only operate on a copy)
             instanceType = instanceType.MakeByRefType();
         }
+
+        // We found a valid instance type that is the type we want to load
         return true;
     }
-    */
 
     public static Visibility Visibility(this MemberInfo? memberInfo)
     {
