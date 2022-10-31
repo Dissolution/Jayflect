@@ -140,5 +140,86 @@ public static class Hasher
             }
         }
     }
+
+
+    public static void Add<T>(this ref HashCode hashCode, ReadOnlySpan<T> span)
+    {
+        switch (span.Length)
+        {
+            case 0: return;
+            case 1:
+                hashCode.Add<T>(span[0]);
+                return;
+            case 2:  
+                hashCode.Add<T>(span[0]);
+                hashCode.Add<T>(span[1]);
+                return;
+            case 3: 
+                hashCode.Add<T>(span[0]);
+                hashCode.Add<T>(span[1]);
+                hashCode.Add<T>(span[2]);
+                return;
+            case 4: 
+                hashCode.Add<T>(span[0]);
+                hashCode.Add<T>(span[1]);
+                hashCode.Add<T>(span[2]);
+                hashCode.Add<T>(span[3]);
+                return;
+            case 5: 
+                hashCode.Add<T>(span[0]);
+                hashCode.Add<T>(span[1]);
+                hashCode.Add<T>(span[2]);
+                hashCode.Add<T>(span[3]);
+                hashCode.Add<T>(span[4]);
+                return;
+            case 6: 
+                hashCode.Add<T>(span[0]);
+                hashCode.Add<T>(span[1]);
+                hashCode.Add<T>(span[2]);
+                hashCode.Add<T>(span[3]);
+                hashCode.Add<T>(span[4]);
+                hashCode.Add<T>(span[5]);
+                return;
+            case 7: 
+                hashCode.Add<T>(span[0]);
+                hashCode.Add<T>(span[1]);
+                hashCode.Add<T>(span[2]);
+                hashCode.Add<T>(span[3]);
+                hashCode.Add<T>(span[4]);
+                hashCode.Add<T>(span[5]);
+                hashCode.Add<T>(span[6]);
+                return;
+            case 8: 
+                hashCode.Add<T>(span[0]);
+                hashCode.Add<T>(span[1]);
+                hashCode.Add<T>(span[2]);
+                hashCode.Add<T>(span[3]);
+                hashCode.Add<T>(span[4]);
+                hashCode.Add<T>(span[5]);
+                hashCode.Add<T>(span[6]);
+                hashCode.Add<T>(span[7]);
+                return;
+            default:
+            {
+                for (var i = 0; i < span.Length; i++)
+                {
+                    hashCode.Add<T>(span[i]);
+                }
+                return;
+            }
+        }
+    }
+
+    public static void Add<T>(this ref HashCode hashCode, params T[] values)
+    {
+        Add<T>(ref hashCode, (ReadOnlySpan<T>)values);
+    }
     
+    public static void Add<T>(this ref HashCode hashCode, IEnumerable<T> values)
+    {
+        foreach (var value in values)
+        {
+            hashCode.Add<T>(value);
+        }
+    }
 }

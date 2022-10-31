@@ -1,12 +1,13 @@
 ﻿using System.Diagnostics;
 using Jay.Dumping;
+using Jay.Dumping.Interpolated;
 
 namespace Jayflect.Dumping;
 
 public sealed class ExpressionDumper : Dumper<Expression>
 {
     protected override void DumpImpl(ref DumpStringHandler stringHandler, 
-        [NotNull] Expression expression, DumpFormat format)
+        [DisallowNull] Expression expression, DumpFormat format)
     {
         switch (expression)
         {

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Jay.Dumping.Interpolated;
 using Jay.Extensions;
 
 namespace Jay.Dumping;
@@ -13,13 +14,15 @@ public sealed class EnumerableDumper : Dumper<IEnumerable>
     }
 
     protected override void DumpImpl(ref DumpStringHandler dumpHandler, 
-        [NotNull] IEnumerable enumerable, DumpFormat format)
+        [DisallowNull] IEnumerable enumerable, DumpFormat format)
     {
-        if (format >= DumpFormat.Inspect)
+        if (format.IsWithType)
         {
             dumpHandler.Dump(enumerable.GetType());
         }
-
+        
+        // Individual values
+        dumpHandler.Write('{');
         ReadOnlySpan<char> delimiter = ", ";
         if (format.IsCustom)
         {
@@ -31,28 +34,22 @@ public sealed class EnumerableDumper : Dumper<IEnumerable>
         {
             if (enumerable is IList list)
             {
-                dumpHandler.Write('[');
                 for (var i = 0; i < list.Count; i++)
                 {
                     if (i > 0) dumpHandler.Write(delimiter);
                     objDumper.DumpTo(ref dumpHandler, list[i], format);
                 }
-                dumpHandler.Write(']');
+                dumpHandler.Write('}');
                 return;
             }
             
             if (collection.Count == 0)
             {
-                dumpHandler.Write("()");
+                dumpHandler.Write('}');
                 return;
             }
-            
-            dumpHandler.Write('(');
         }
-        else
-        {
-            dumpHandler.Write('{');
-        }
+       
         
         IEnumerator? enumerator = null;
         try
@@ -72,13 +69,6 @@ public sealed class EnumerableDumper : Dumper<IEnumerable>
                 disposable.Dispose();
         }
 
-        if (enumerable is ICollection)
-        {
-            dumpHandler.Write(')');
-        }
-        else
-        {
-            dumpHandler.Write('}');
-        }
+        dumpHandler.Write('}');
     }
 }

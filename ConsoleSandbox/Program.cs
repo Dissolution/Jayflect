@@ -1,9 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ConsoleSandbox;
-using Jay.Validation;
 using Jayflect;
-using Jayflect.Extensions;
 
 #pragma warning disable
 
@@ -32,7 +30,7 @@ try
 
     var tc = new TestClass();
     //var reflection = DynamicReflection.Of(tc);
-    var reflection = DynamicReflection.Of(tc);
+    var reflection = DynamicReflection.Of(147);
 
     bool isFour = reflection == 4;
     

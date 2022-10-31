@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using Jay.Dumping;
+﻿using Jay.Dumping;
+using Jay.Dumping.Interpolated;
 
 namespace Jayflect.Dumping;
 
@@ -7,7 +7,7 @@ namespace Jayflect.Dumping;
 public class MemberInfoDumper : Dumper<MemberInfo>
 {
     protected override void DumpImpl(ref DumpStringHandler stringHandler, 
-        [NotNull] MemberInfo value, DumpFormat format)
+        [DisallowNull] MemberInfo value, DumpFormat format)
     {
         // MemberInfo type not known at find time
         if (value is FieldInfo field)

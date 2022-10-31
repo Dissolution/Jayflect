@@ -1,6 +1,6 @@
 ﻿using Jay.Comparison;
 using Jay.Dumping;
-using Jay.Dumping.Extensions;
+using Jay.Dumping.Interpolated;
 using Jay.Validation;
 
 namespace Jayflect.Building.Emission.Instructions;

@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel.Design;
 using Jay;
-using Jay.Dumping;
+using Jay.Dumping.Interpolated;
 using Jayflect.Building.Emission;
 using Jayflect.Exceptions;
 using Jayflect.Extensions;
@@ -24,18 +24,18 @@ public class RuntimeMethodAdapter
 {
     public MethodBase Method { get; }
 
-    public MethodSignature MethodSig { get; }
+    public DelegateInfo MethodSig { get; }
 
-    public DelegateSignature DelegateSig { get; }
+    public DelegateInfo DelegateSig { get; }
 
     public RuntimeDelegateBuilder RuntimeDelegateBuilder { get; }
 
     public IFluentILEmitter Emitter => RuntimeDelegateBuilder.Emitter;
 
-    public RuntimeMethodAdapter(MethodBase method, DelegateSignature delegateSig)
+    public RuntimeMethodAdapter(MethodBase method, DelegateInfo delegateSig)
     {
         this.Method = method;
-        this.MethodSig = DelegateSignature.For(method);
+        this.MethodSig = DelegateInfo.For(method);
         this.DelegateSig = delegateSig;
         this.RuntimeDelegateBuilder = RuntimeBuilder.CreateRuntimeDelegateBuilder(delegateSig);
     }
@@ -140,6 +140,17 @@ public class RuntimeMethodAdapter
                     DelegateSig.ParameterCount > 0 &&
                     CanAdaptType(DelegateSig.Parameters[0], MethodSig.Parameters[0]))
                 {
+                    // Check if we use this that we have 1:1 leftover or params
+                    if (MethodSig.ParameterCount == DelegateSig.ParameterCount ||
+                        (DelegateSig.ParameterCount > 1 && DelegateSig.Parameters[1].IsParams()))
+                    {
+                        // Okay!
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+
                     // We know we had an instance param
                     Arg instance = DelegateSig.Parameters[0];
                     result = instance.TryLoadAs(Emitter, MethodSig.Parameters[0]);
@@ -198,7 +209,7 @@ public class RuntimeMethodAdapter
         return result;
     }
 
-    public static Result TryAdapt(MethodBase method, DelegateSignature delegateSig, [NotNullWhen(true)] out Delegate? adapterDelegate)
+    public static Result TryAdapt(MethodBase method, DelegateInfo delegateSig, [NotNullWhen(true)] out Delegate? adapterDelegate)
     {
         // faster return
         adapterDelegate = default;
@@ -223,7 +234,7 @@ public class RuntimeMethodAdapter
     public static Result TryAdapt<TDelegate>(MethodBase method, [NotNullWhen(true)] out TDelegate? @delegate)
         where TDelegate : Delegate
     {
-        var result = TryAdapt(method, DelegateSignature.For<TDelegate>(), out var del);
+        var result = TryAdapt(method, DelegateInfo.For<TDelegate>(), out var del);
         if (result)
         {
             @delegate = del as TDelegate;

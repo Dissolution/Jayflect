@@ -1,10 +1,9 @@
 ﻿using System.Collections;
 using System.ComponentModel;
-using Jay.Dumping.Interpolated;
 
 // ReSharper disable UnusedParameter.Local
 
-namespace Jay.Dumping;
+namespace Jay.Dumping.Interpolated;
 
 [InterpolatedStringHandler]
 public ref struct DumpStringHandler
@@ -27,14 +26,14 @@ public ref struct DumpStringHandler
     {
         _charSpanBuilder = new(literalLength, formatCount);
     }
-
+    
     [EditorBrowsable(EditorBrowsableState.Never)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendLiteral(string text)
     {
         Write(text);
     }
-
+    
     [EditorBrowsable(EditorBrowsableState.Never)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted<T>(T? value)
@@ -48,7 +47,7 @@ public ref struct DumpStringHandler
     {
         Dump<T>(value, format);
     }
-
+    
     [EditorBrowsable(EditorBrowsableState.Never)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(string? text)

@@ -12,11 +12,11 @@ public readonly ref struct DumpFormat
     public static bool operator ==(DumpFormat left, DumpFormat right) => left.Equals(right);
     public static bool operator !=(DumpFormat left, DumpFormat right) => !left.Equals(right);
 
-    public static bool operator >(DumpFormat left, DumpFormat right) => GetCValue(left) > GetCValue(right);
-    public static bool operator <(DumpFormat left, DumpFormat right) => GetCValue(left) < GetCValue(right);
-    
-    public static bool operator >=(DumpFormat left, DumpFormat right) => GetCValue(left) >= GetCValue(right);
-    public static bool operator <=(DumpFormat left, DumpFormat right) => GetCValue(left) <= GetCValue(right);
+    public static bool operator >(DumpFormat left, DumpFormat right) => left.CompareTo(right) > 0;
+    public static bool operator <(DumpFormat left, DumpFormat right) => left.CompareTo(right) < 0;
+
+    public static bool operator >=(DumpFormat left, DumpFormat right) => left.CompareTo(right) >= 0;
+    public static bool operator <=(DumpFormat left, DumpFormat right) => left.CompareTo(right) <= 0;
 
     public static DumpFormat None
     {
@@ -24,34 +24,24 @@ public readonly ref struct DumpFormat
         get => new DumpFormat();
     }
 
-    public static DumpFormat View
+    public static DumpFormat Custom(ReadOnlySpan<char> format) => new DumpFormat(format);
+
+    public static DumpFormat WithType
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => new DumpFormat("V");
+        get => new DumpFormat("W:Type");
     }
+   
 
-    public static DumpFormat Inspect
+    private static int GetCompareValue(DumpFormat format)
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => new DumpFormat("I");
-    }
-
-    public static DumpFormat All
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => new DumpFormat("A");
-    }
-
-    private static int GetCValue(DumpFormat format)
-    {
-        var span = format._formatSpan;
-        if (span.Length == 0) return 0; // None
-        if (span.Length > 1) return 1;  // Custom
-        char ch = span[0];
-        if (ch == 'V') return 2;        // View
-        if (ch == 'I') return 3;        // Inspect
-        if (ch == 'A') return 4;        // All
-        // Fallback to Custom
+        // None/Default
+        if (format.IsNone) return 0;
+        
+        // Defined?
+        if (format.IsWithType) return 2;
+        
+        //if (format.IsCustom)
         return 1;                        
     }
     
@@ -63,29 +53,13 @@ public readonly ref struct DumpFormat
         get => _formatSpan.Length == 0;
     }
     
-    public bool IsCustom
+    public bool IsWithType
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _formatSpan.Length > 0 && _formatSpan[0] != 'V' && _formatSpan[0] != 'I' && _formatSpan[0] != 'A';
+        get => _formatSpan == "W:Type";
     }
 
-    public bool IsView
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _formatSpan.Length > 0 && _formatSpan[0] == 'V';
-    }
-    
-    public bool IsInspect
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _formatSpan.Length > 0 && _formatSpan[0] == 'I';
-    }
-    
-    public bool IsAll
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _formatSpan.Length > 0 && _formatSpan[0] == 'A';
-    }
+    public bool IsCustom => !IsNone && !IsWithType;
 
     private DumpFormat(ReadOnlySpan<char> formatSpan)
     {
@@ -95,7 +69,7 @@ public readonly ref struct DumpFormat
     public string? GetCustomFormatString()
     {
         var format = _formatSpan;
-        if (format.Length > 0 && format[0] is not ('V' or 'I' or 'A'))
+        if (format.Length > 0 && format != "W:Type")
         {
             return new string(format);
         }
@@ -104,7 +78,7 @@ public readonly ref struct DumpFormat
     
     public bool Equals(DumpFormat dumpFormat) => _formatSpan.SequenceEqual(dumpFormat._formatSpan);
 
-    public int CompareTo(DumpFormat dumpFormat) => GetCValue(this).CompareTo(GetCValue(dumpFormat));
+    public int CompareTo(DumpFormat dumpFormat) => GetCompareValue(this).CompareTo(GetCompareValue(dumpFormat));
     
     public override bool Equals(object? obj) => false;
     public override int GetHashCode() => 0;

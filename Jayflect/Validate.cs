@@ -64,4 +64,19 @@ internal static class Validate
             throw new ArgumentException(Dump($"The given type '{type}' must be a static type"), typeParamName);
         }
     }
+
+    public static T[] LengthIs<T>([AllowNull, NotNull] T[]? array, int length,
+        [CallerArgumentExpression(nameof(array))]
+        string? arrayParamName = null)
+    {
+        if (array is null)
+        {
+            throw new ArgumentNullException(arrayParamName);
+        }
+        if (array.Length != length)
+        {
+            throw new ArgumentException(Dump($"The given {array.GetType()} does not have {length} items", arrayParamName));
+        }
+        return array;
+    }
 }

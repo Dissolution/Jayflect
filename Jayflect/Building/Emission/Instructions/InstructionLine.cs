@@ -1,5 +1,5 @@
 ﻿using Jay.Dumping;
-using Jay.Dumping.Extensions;
+using Jay.Dumping.Interpolated;
 using Jay.Extensions;
 
 namespace Jayflect.Building.Emission.Instructions;

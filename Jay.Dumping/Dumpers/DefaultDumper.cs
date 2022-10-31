@@ -1,80 +1,84 @@
 ﻿using System.Reflection;
-using Jay.Dumping.Extensions;
+using Jay.Dumping.Interpolated;
 
 namespace Jay.Dumping;
 
-internal sealed class DefaultDumper : IDumper<object>, IDumper
+// This should never be added through scan, but if it does, it is the last ever added
+[DumpOptions(Priority = int.MaxValue)]
+internal sealed class DefaultDumper : Dumper<object>
 {
-    void IDumper.DumpTo(ref DumpStringHandler dumpHandler, object? value, DumpFormat format) 
-        => Dump<object>(ref dumpHandler, value, format);
-    void IDumper<object>.DumpTo(ref DumpStringHandler stringHandler, object? value, DumpFormat format) 
-        => Dump<object>(ref stringHandler, value, format);
-
-    public static void Dump<T>(ref DumpStringHandler stringHandler, T? value, DumpFormat format = default)
+    public override bool CanDump(Type type)
     {
-        if (Dumper.DumpedNull(ref stringHandler, value, format)) return;
+        return true;
+    }
 
+    protected override void DumpImpl(ref DumpStringHandler dumpHandler, object value, DumpFormat format)
+    {
+        DumpTo<object>(ref dumpHandler, value, format);
+    }
+
+    public override void DumpObjTo(ref DumpStringHandler dumpHandler, object? obj, DumpFormat format = default)
+    {
+        DumpTo<object>(ref dumpHandler, obj, format);
+    }
+    public override void DumpTo(ref DumpStringHandler dumpHandler, object? value, DumpFormat format = default)
+    {
+        DumpTo<object>(ref dumpHandler, value, format);
+    }
+
+    public static void DumpTo<T>(ref DumpStringHandler dumpHandler, T? value, DumpFormat format = default)
+    {
+        if (DumpedNull(ref dumpHandler, value, format)) return;
+
+        var valueType = value.GetType();
+        
+        if (valueType.IsEnum)
+        {
+           Debugger.Break();
+        }
+        
         if (value is IDumpable)
         {
-            ((IDumpable)value).DumpTo(ref stringHandler, format);
+            ((IDumpable)value).DumpTo(ref dumpHandler, format);
             return;
         }
 
         // Add more information for higher-level formats
-        if (format >= DumpFormat.Inspect)
+        if (format.IsWithType)
         {
-            var valueType = value.GetType();
-            
-            stringHandler.Write("(");
-            stringHandler.Dump(valueType, format);
-            stringHandler.Write(")");
+            dumpHandler.Write("(");
+            dumpHandler.Dump(valueType, format);
+            dumpHandler.Write(")");
 
-            IReadOnlyList<MemberInfo> members;
-
-            // Which members are we including?
-            if (format == DumpFormat.Inspect)
-            {
-                members = valueType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            }
-            else
-            {
-                members = valueType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            }
+            var properties = valueType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             
             // None to write?
-            if (members.Count == 0)
+            if (properties.Length == 0)
             {
                 // Just write the value
-                stringHandler.Write(" ");
-                stringHandler.AppendFormatted<T>(value, format.GetCustomFormatString());
+                dumpHandler.Write(" ");
+                dumpHandler.Write<T>(value);
                 return;
             }
             
             // Write out members
-            stringHandler.Write(" {");
+            dumpHandler.Write(" {");
 
-            foreach (var member in members)
+            foreach (var property in properties)
             {
-                stringHandler.Write(Environment.NewLine);
-                stringHandler.Write('\t');
-                stringHandler.Dump(member);
-                stringHandler.Write(": ");
-                object? memberValue;
-                if (member is PropertyInfo property)
-                    memberValue = property.GetValue(value);
-                else if (member is FieldInfo field)
-                    memberValue = field.GetValue(value);
-                else
-                    memberValue = "???";
-                stringHandler.Dump(memberValue, format);
+                dumpHandler.Write(Environment.NewLine);
+                dumpHandler.Write('\t');
+                dumpHandler.Dump(property);
+                dumpHandler.Write(": ");
+                dumpHandler.Dump(property.GetValue(value), format);
             }
-            stringHandler.Write(Environment.NewLine);
-            stringHandler.Write('}');
+            dumpHandler.Write(Environment.NewLine);
+            dumpHandler.Write('}');
         }
         else
         {
             // Do not call Dump further, at this point we're delegating behavior to DefaultInterpolatedStringHandler
-            stringHandler.Write<T>(value, format.GetCustomFormatString());
+            dumpHandler.Write<T>(value, format.GetCustomFormatString());
         }
     }
 }

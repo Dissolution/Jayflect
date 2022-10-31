@@ -1,13 +1,13 @@
 ﻿using System.Collections;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Numerics;
 using Jay;
-using Jay.Collections;
 using Jay.Comparison;
 using Jay.Dumping;
+using Jay.Dumping.Extensions;
 using Jay.Extensions;
 using Jayflect.Building.Adaption;
-using Jayflect.Building.Emission;
 using Jayflect.Extensions;
 
 namespace Jayflect;
@@ -284,7 +284,6 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     {
         switch (expressionType)
         {
-
             case ExpressionType.Add:
                 break;
             case ExpressionType.AddChecked:
@@ -314,7 +313,9 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
             case ExpressionType.Divide:
                 break;
             case ExpressionType.Equal:
-                break;
+            {
+                return new("op_Equality", typeof(bool), Validate.LengthIs(argTypes, 2));
+            }
             case ExpressionType.ExclusiveOr:
                 break;
             case ExpressionType.GreaterThan:
@@ -463,7 +464,8 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
                 throw new ArgumentOutOfRangeException(nameof(expressionType), expressionType, null);
         }
 
-        var d = Dump((expressionType, returnType, argTypes));
+        var methods = _targetType.GetMethods(Reflect.Flags.Static);
+        var d = Dump((expressionType, returnType, argTypes, methods));
         Debugger.Break();
         throw new NotImplementedException();
     }
@@ -480,11 +482,11 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
             result = objectInvoke(_target, arg);
             return true;
         }
-        Debugger.Break();
 
 
-        var methods = _targetType.GetMethods(Reflect.Flags.All);
-        var ms = Dump(methods, DumpFormat.All);
+        var eqMethods = _targetType.GetMethods(Reflect.Flags.All)
+            .Where(method => method.Name.Contains("eq", StringComparison.OrdinalIgnoreCase))
+            .Dump();
         var opType = binder.Operation.GetType();
         Debugger.Break();
         throw new NotImplementedException();

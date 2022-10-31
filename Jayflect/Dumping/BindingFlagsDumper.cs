@@ -1,20 +1,14 @@
 ﻿using Jay.Dumping;
-using Jay.Dumping.Extensions;
+using Jay.Dumping.Interpolated;
 
 namespace Jayflect.Dumping;
 
 public sealed class BindingFlagsDumper : Dumper<BindingFlags>
 {
-    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] BindingFlags value, DumpFormat format)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [DisallowNull] BindingFlags value, DumpFormat format)
     {
-        if (format.IsCustom)
-        {
-            stringHandler.AppendFormatted<BindingFlags>(value, format.GetCustomFormatString());
-            return;
-        }
-
         // Inspect is for debuggers!
-        if (format >= DumpFormat.Inspect)
+        if (format.IsWithType)
         {
             if (value.HasFlag(BindingFlags.Public | BindingFlags.NonPublic))
             {
@@ -38,6 +32,6 @@ public sealed class BindingFlagsDumper : Dumper<BindingFlags>
         }
         
         // Default
-        stringHandler.AppendFormatted<BindingFlags>(value);
+        stringHandler.Write<BindingFlags>(value);
     }
 }

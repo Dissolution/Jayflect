@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using Jay.Dumping;
+using Jay.Dumping.Interpolated;
 using Jayflect.Exceptions;
 using Jayflect.Extensions;
 

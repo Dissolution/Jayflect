@@ -5,7 +5,7 @@ namespace Jayflect.Building;
 public class RuntimeDelegateBuilder
 {
     protected readonly DynamicMethod _dynamicMethod;
-    protected readonly DelegateSignature _delegateSig;
+    protected readonly DelegateInfo _delegateSig;
     private IFluentILEmitter? _emitter;
 
     public string Name => _dynamicMethod.Name;
@@ -22,16 +22,16 @@ public class RuntimeDelegateBuilder
 
     public int ParameterCount => _delegateSig.ParameterCount;
 
-    public DelegateSignature Signature => _delegateSig;
+    public DelegateInfo Signature => _delegateSig;
 
     //public ILGenerator IlGenerator => _dynamicMethod.GetILGenerator();
 
     public IFluentILEmitter Emitter => _emitter ??= new FluentILGenerator(_dynamicMethod.GetILGenerator());
 
-    internal RuntimeDelegateBuilder(DynamicMethod dynamicMethod, DelegateSignature delegateSignature)
+    internal RuntimeDelegateBuilder(DynamicMethod dynamicMethod, DelegateInfo concreteSignature)
     {
         _dynamicMethod = dynamicMethod;
-        _delegateSig = delegateSignature;
+        _delegateSig = concreteSignature;
     }
 
     public Delegate CreateDelegate()

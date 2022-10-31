@@ -1,4 +1,6 @@
-﻿namespace Jay.Dumping.Extensions;
+﻿using Jay.Dumping.Interpolated;
+
+namespace Jay.Dumping.Extensions;
 
 public static class DumpingExtensions
 {
@@ -16,7 +18,7 @@ public static class DumpingExtensions
         dumper.DumpTo(ref stringHandler, span[0], dumpFormat);
         for (var i = 1; i < len; i++)
         {
-            stringHandler.AppendLiteral(",");
+            stringHandler.Write(",");
             dumper.DumpTo(ref stringHandler, span[i], dumpFormat);
         }
         return stringHandler.ToStringAndDispose();
@@ -30,7 +32,7 @@ public static class DumpingExtensions
         return stringHandler.ToStringAndDispose();
     }
     
-    public static string Dump<T>(this ref DumpStringHandler dumpStringHandler)
+    public static string Dump(this ref DumpStringHandler dumpStringHandler)
     {
        return dumpStringHandler.ToStringAndDispose();
     }

@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using Jay.Comparison;
-using Jay.Dumping;
+using Jay.Dumping.Interpolated;
 using Jayflect.Building;
 
 namespace Jayflect.Exceptions;

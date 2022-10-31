@@ -1,13 +1,13 @@
 ﻿using System.Diagnostics;
 using Jay.Dumping;
-using Jay.Dumping.Extensions;
+using Jay.Dumping.Interpolated;
 
 namespace Jayflect.Dumping;
 
 public sealed class TypeDumper : Dumper<Type>
 {
     // Simple type aliases
-    private readonly List<(Type Type, string Dumped)> _typeDumpCache = new()
+    private readonly List<(Type Type, string DumpString)> _typeDumpCache = new()
     {
         (typeof(bool), "bool"),
         (typeof(char), "char"),
@@ -27,37 +27,34 @@ public sealed class TypeDumper : Dumper<Type>
         (typeof(void), "void"),
     };
 
-    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] Type type, DumpFormat format)
+    private void DumpType(ref DumpStringHandler dumpHandler, Type type)
     {
-        Type? underType;
+         Type? underType;
 
         // Enum is always just Name
         if (type.IsEnum)
         {
-            stringHandler.Write(type.Name);
+            dumpHandler.Write(type.Name);
             return;
         }
 
         // Nullable<T>?
         underType = Nullable.GetUnderlyingType(type);
-        if (underType is not null && format < DumpFormat.All)
+        if (underType is not null)
         {
-            // Shortcut to dumping base type, followed by ?
-            DumpImpl(ref stringHandler, underType, format);
-            stringHandler.Write('?');
+            // Dump base type followed by question mark
+            DumpType(ref dumpHandler, underType);
+            dumpHandler.Write('?');
             return;
         }
 
         // un-detailed fast cache check
-        if (format < DumpFormat.All)
+        foreach (var pair in _typeDumpCache)
         {
-            foreach (var pair in _typeDumpCache)
+            if (pair.Type == type)
             {
-                if (pair.Type == type)
-                {
-                    stringHandler.Write(pair.Dumped);
-                    return;
-                }
+                dumpHandler.Write(pair.DumpString);
+                return;
             }
         }
 
@@ -68,17 +65,17 @@ public sealed class TypeDumper : Dumper<Type>
             // $"{type}*"
             underType = type.GetElementType();
             Debug.Assert(underType != null);
-            DumpImpl(ref stringHandler, underType, format);
-            stringHandler.Write('*');
+            DumpType(ref dumpHandler, underType);
+            dumpHandler.Write('*');
             return;
         }
 
-        if (type.IsByRef || type.IsByRefLike)
+        if (type.IsByRef)
         {
             underType = type.GetElementType();
             Debug.Assert(underType != null);
-            stringHandler.Write("ref ");
-            DumpImpl(ref stringHandler, underType, format);
+            dumpHandler.Write("ref ");
+            DumpType(ref dumpHandler, underType);
             return;
         }
 
@@ -86,23 +83,23 @@ public sealed class TypeDumper : Dumper<Type>
         {
             underType = type.GetElementType();
             Debug.Assert(underType != null);
-            DumpImpl(ref stringHandler, underType, format);
-            stringHandler.Write("[]");
+            DumpType(ref dumpHandler, underType);
+            dumpHandler.Write("[]");
             return;
         }
 
         // Nested Type?
-        if (format > DumpFormat.View && (type.IsNested && !type.IsGenericParameter))
+        if (type.IsNested && !type.IsGenericParameter)
         {
-            DumpImpl(ref stringHandler, type.DeclaringType!, format);
-            stringHandler.Write('.');
+            DumpType(ref dumpHandler, type.DeclaringType!);
+            dumpHandler.Write('.');
         }
 
         // If non-generic
         if (!type.IsGenericType)
         {
             // Just write the type name and we're done
-            stringHandler.Write(type.Name);
+            dumpHandler.Write(type.Name);
             return;
         }
 
@@ -115,18 +112,40 @@ public sealed class TypeDumper : Dumper<Type>
             var constraints = type.GetGenericParameterConstraints();
             if (constraints.Length > 0)
             {
-                stringHandler.Write(" : ");
+                dumpHandler.Write(" : ");
                 Debugger.Break();
             }
 
             Debugger.Break();
         }
-
-        // Add our types!
+        
+        // Name is often something like NAME`2 for NAME<,>, so we want to strip that off
         var i = typeName.IndexOf('`');
-        stringHandler.Write(i >= 0 ? typeName[..i] : typeName);
-        stringHandler.Write('<');
-        stringHandler.DumpDelimited<Type>(", ", type.GetGenericArguments(), format);
-        stringHandler.Write('>');
+        dumpHandler.Write(i >= 0 ? typeName[..i] : typeName);
+        
+        // Add our generic types
+        dumpHandler.Write('<');
+        var argTypes = type.GetGenericArguments();
+        for (i = 0; i < argTypes.Length; i++)
+        {
+            if (i > 0) dumpHandler.Write(", ");
+            DumpType(ref dumpHandler, argTypes[i]);
+        }
+        dumpHandler.Write('>');
+    }
+    
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [DisallowNull] Type type, DumpFormat format)
+    {
+        if (format.IsWithType)
+        {
+            stringHandler.Write("typeof(");
+        }
+
+        DumpType(ref stringHandler, type);
+        
+        if (format.IsWithType)
+        {
+            stringHandler.Write(")");
+        }
     }
 }

@@ -14,6 +14,21 @@ public static class EnumerableExtensions
         return value;
     }
 
+    public static IEnumerable<T> Double<T>(this IEnumerable<T> source)
+    {
+        using var e = source.GetEnumerator();
+        if (!e.MoveNext())
+            throw new ArgumentException("There are no elements", nameof(source));
+        var firstValue = e.Current;
+        if (!e.MoveNext())
+            throw new ArgumentException("There is only one element", nameof(source));
+        var secondValue = e.Current;
+        if (e.MoveNext())
+            throw new ArgumentException("There are more than two elements", nameof(source));
+        yield return firstValue;
+        yield return secondValue;
+    }
+
     public static IEnumerable<T> IgnoreExceptions<T>(this IEnumerable<T> enumerable)
     {
         using var enumerator = Result.InvokeOrDefault(() => enumerable.GetEnumerator());

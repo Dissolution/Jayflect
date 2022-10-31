@@ -1,14 +1,14 @@
 ﻿using Jay.Dumping;
-using Jay.Dumping.Extensions;
+using Jay.Dumping.Interpolated;
 using Jayflect.Extensions;
 
 namespace Jayflect.Dumping;
 
 public sealed class MethodBaseDumper : Dumper<MethodBase>
 {
-    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] MethodBase method, DumpFormat format)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [DisallowNull] MethodBase method, DumpFormat format)
     {
-        if (format >= DumpFormat.Inspect)
+        if (format.IsWithType)
         {
             stringHandler.Write(method.Visibility());
             stringHandler.Write(' ');
@@ -18,7 +18,7 @@ public sealed class MethodBaseDumper : Dumper<MethodBase>
         
         stringHandler.Dump(method.ReturnType(), format);
         stringHandler.Write(' ');
-        if (format > DumpFormat.View)
+        if (format.IsWithType)
         {
             stringHandler.Dump(method.OwnerType(), format);
             stringHandler.Write('.');

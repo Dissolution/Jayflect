@@ -1,4 +1,6 @@
-﻿namespace Jay.Dumping;
+﻿using Jay.Dumping.Interpolated;
+
+namespace Jay.Dumping;
 
 public interface IDumper
 {
@@ -11,5 +13,5 @@ public interface IDumper
     /// Dumps an <see cref="object"/> to a <paramref name="dumpHandler"/> with optional <see cref="format"/>
     /// </summary>
     /// <exception cref=""></exception>
-    void DumpTo(ref DumpStringHandler dumpHandler, object? obj, DumpFormat format = default);
+    void DumpObjTo(ref DumpStringHandler dumpHandler, object? obj, DumpFormat format = default);
 }

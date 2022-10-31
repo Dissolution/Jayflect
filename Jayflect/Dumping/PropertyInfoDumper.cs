@@ -1,12 +1,12 @@
 ﻿using Jay.Dumping;
-using Jay.Dumping.Extensions;
+using Jay.Dumping.Interpolated;
 using Jayflect.Extensions;
 
 namespace Jayflect.Dumping;
 
 public sealed class PropertyInfoDumper : Dumper<PropertyInfo>
 {
-    protected override void DumpImpl(ref DumpStringHandler stringHandler, [NotNull] PropertyInfo property, DumpFormat format)
+    protected override void DumpImpl(ref DumpStringHandler stringHandler, [DisallowNull] PropertyInfo property, DumpFormat format)
     {
         if (format == DumpFormat.None)
         {

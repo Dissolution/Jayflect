@@ -1,6 +1,6 @@
-﻿using System.Collections.Concurrent;
-using System.Reflection;
+﻿using System.Reflection;
 using Jay.Collections;
+using Jay.Dumping.Extensions;
 using Jay.Extensions;
 
 namespace Jay.Dumping;
@@ -35,13 +35,15 @@ public static class DumperCache
                 => dumper.GetType().GetCustomAttribute<DumpOptionsAttribute>()?.IsDefaultDumper == true,
             new DefaultDumper());
     }
-    
+
     private static IDumper FindDumper(Type type)
     {
         foreach (var dumper in _dumpers)
         {
             if (dumper.CanDump(type))
+            {
                 return dumper;
+            }
         }
         return _defaultDumper;
     }
@@ -54,21 +56,34 @@ public static class DumperCache
             if (dumper.CanDump(type))
             {
                 if (dumper is IDumper<T> tDumper) return tDumper;
+                // Why isn't it?
+                if (type.IsValueType)
+                {
+                    return new StructInterfaceDumper<T>(dumper);
+                }
                 throw new InvalidOperationException();
             }
         }
+        // Can we use default?
         {
             if (_defaultDumper is IDumper<T> tDumper) return tDumper;
+            // Why not?
+            var t = type.Dump();
+            Debugger.Break();
             throw new InvalidOperationException();
         }
     }
     
-    public static IDumper GetDumper(Type type) => _typeDumperCache.GetOrAdd(type, t => FindDumper(t));
+    public static IDumper GetDumper(Type type)
+    {
+        return _typeDumperCache.GetOrAdd(type, FindDumper);
+    }
 
     public static IDumper<T> GetDumper<T>()
     {
-        var dumper = _typeDumperCache.GetOrAdd(typeof(T), _ => FindDumper<T>());
-        if (dumper is IDumper<T> tDumper) return tDumper;
+        IDumper iDumper = _typeDumperCache.GetOrAdd(typeof(T), _ => FindDumper<T>());
+        if (iDumper is IDumper<T> tDumper) return tDumper;
+        Debugger.Break();
         throw new InvalidOperationException();
     }
 }

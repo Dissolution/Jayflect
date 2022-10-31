@@ -18,7 +18,7 @@ public static class RuntimeBuilder
         ModuleBuilder = AssemblyBuilder.DefineDynamicModule($"{nameof(RuntimeBuilder)}_Module");
     }
     
-    public static DynamicMethod CreateDynamicMethod(DelegateSignature sig, string? name = null)
+    public static DynamicMethod CreateDynamicMethod(DelegateInfo sig, string? name = null)
     {
         return new DynamicMethod(MemberNaming.CreateMemberName(MemberTypes.Method, name),
             MethodAttributes.Public | MethodAttributes.Static,
@@ -29,23 +29,23 @@ public static class RuntimeBuilder
             true);
     }
 
-    public static RuntimeDelegateBuilder CreateRuntimeDelegateBuilder(DelegateSignature delegateSig, string? name = null)
+    public static RuntimeDelegateBuilder CreateRuntimeDelegateBuilder(DelegateInfo delegateSig, string? name = null)
     {
         var dynamicMethod = CreateDynamicMethod(delegateSig, name);
         return new RuntimeDelegateBuilder(dynamicMethod, delegateSig);
     }
 
     public static RuntimeDelegateBuilder CreateRuntimeDelegateBuilder(Type delegateType, string? name = null)
-        => CreateRuntimeDelegateBuilder(DelegateSignature.For(delegateType), name);
+        => CreateRuntimeDelegateBuilder(DelegateInfo.For(delegateType), name);
     
     public static RuntimeDelegateBuilder<TDelegate> CreateRuntimeDelegateBuilder<TDelegate>(string? name = null)
         where TDelegate : Delegate
     {
-        var dynamicMethod = CreateDynamicMethod(DelegateSignature.For<TDelegate>(), name);
+        var dynamicMethod = CreateDynamicMethod(DelegateInfo.For<TDelegate>(), name);
         return new RuntimeDelegateBuilder<TDelegate>(dynamicMethod);
     }
 
-    public static Delegate CreateDelegate(DelegateSignature delegateSig, string? name, Action<RuntimeDelegateBuilder> buildDelegate)
+    public static Delegate CreateDelegate(DelegateInfo delegateSig, string? name, Action<RuntimeDelegateBuilder> buildDelegate)
     {
         var runtimeDelegateBuilder = CreateRuntimeDelegateBuilder(delegateSig, name);
         buildDelegate(runtimeDelegateBuilder);
@@ -53,7 +53,7 @@ public static class RuntimeBuilder
     }
 
     public static Delegate CreateDelegate(Type delegateType, string? name, Action<RuntimeDelegateBuilder> buildDelegate)
-        => CreateDelegate(DelegateSignature.For(delegateType), name, buildDelegate);
+        => CreateDelegate(DelegateInfo.For(delegateType), name, buildDelegate);
     
     public static TDelegate CreateDelegate<TDelegate>(string? name, Action<RuntimeDelegateBuilder<TDelegate>> buildDelegate)
         where TDelegate : Delegate
@@ -63,7 +63,7 @@ public static class RuntimeBuilder
         return runtimeDelegateBuilder.CreateDelegate();
     }
     
-    public static Delegate CreateDelegate(DelegateSignature delegateSig, Action<IFluentILEmitter> emitDelegate)
+    public static Delegate CreateDelegate(DelegateInfo delegateSig, Action<IFluentILEmitter> emitDelegate)
     {
         return CreateDelegate(delegateSig, null, emitDelegate);
     }
@@ -73,7 +73,7 @@ public static class RuntimeBuilder
         return CreateDelegate(delegateType, null, emitDelegate);
     }
 
-    public static Delegate CreateDelegate(DelegateSignature delegateSig, string? name, Action<IFluentILEmitter> emitDelegate)
+    public static Delegate CreateDelegate(DelegateInfo delegateSig, string? name, Action<IFluentILEmitter> emitDelegate)
     {
         var runtimeMethod = CreateRuntimeDelegateBuilder(delegateSig, name);
         emitDelegate(runtimeMethod.Emitter);

@@ -1,4 +1,6 @@
-﻿namespace Jay.Dumping;
+﻿using Jay.Dumping.Interpolated;
+
+namespace Jay.Dumping;
 
 public interface IDumpable : ISpanFormattable, IFormattable
 {
