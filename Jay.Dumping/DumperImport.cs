@@ -11,7 +11,7 @@ public static class DumperImport
     {
         return new string(text);
     }
-    
+
     public static string Dump<T>(ReadOnlySpan<T> span, DumpFormat dumpFormat = default)
     {
         int len = span.Length;
@@ -26,15 +26,22 @@ public static class DumperImport
         }
         return stringHandler.ToStringAndDispose();
     }
-    
+
     public static string Dump<T>(T? value, DumpFormat dumpFormat = default)
     {
-        var dumper = DumperCache.GetDumper<T>();
         DumpStringHandler stringHandler = new();
-        dumper.DumpTo(ref stringHandler, value, dumpFormat);
+        if (value is IDumpable dumpable)
+        {
+            dumpable.DumpTo(ref stringHandler, dumpFormat);
+        }
+        else
+        {
+            var dumper = DumperCache.GetDumper<T>();
+            dumper.DumpTo(ref stringHandler, value, dumpFormat);
+        }
         return stringHandler.ToStringAndDispose();
     }
-    
+
     public static string Dump(ref DumpStringHandler stringHandler)
     {
         return stringHandler.ToStringAndDispose();

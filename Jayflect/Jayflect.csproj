@@ -22,29 +22,10 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
     </ItemGroup>
-    
-    
     <ItemGroup>
       <ProjectReference Include="..\Jay.Core\Jay.Core.csproj" />
       <ProjectReference Include="..\Jay.Dumping\Jay.Dumping.csproj" />
     </ItemGroup>
-    
-    
-    <ItemGroup>
-      <Compile Remove="Reflection\**" />
-    </ItemGroup>
-    
-    
-    <ItemGroup>
-      <EmbeddedResource Remove="Reflection\**" />
-    </ItemGroup>
-    
-    
-    <ItemGroup>
-      <None Remove="Reflection\**" />
-    </ItemGroup>
-    
-
 
 
 </Project>

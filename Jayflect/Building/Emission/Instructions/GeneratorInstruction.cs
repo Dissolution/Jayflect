@@ -118,7 +118,7 @@ public sealed class GeneratorInstruction : Instruction
                DefaultComparers.Instance.Equals(generatorInstruction.Argument, this.Argument);
     }
 
-    public override void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public override void DumpTo(ref DumpStringHandler dumpHandler, DumpFormat dumpFormat = default)
     {
         switch (this.IlGeneratorMethod)
         {
@@ -127,70 +127,70 @@ public sealed class GeneratorInstruction : Instruction
             case ILGeneratorMethod.BeginCatchBlock:
             {
                 var exceptionType = Argument.ValidateInstanceOf<Type>();
-                stringHandler.Write("catch (");
-                stringHandler.Dump(exceptionType);
-                stringHandler.Write(')');
+                dumpHandler.Write("catch (");
+                dumpHandler.Dump(exceptionType);
+                dumpHandler.Write(')');
                 return;
             }
             case ILGeneratorMethod.BeginExceptFilterBlock:
             {
-                stringHandler.Write("except filter");
+                dumpHandler.Write("except filter");
                 return;
             }
             case ILGeneratorMethod.BeginExceptionBlock:
             {
                 var endOfBlock = Argument.ValidateInstanceOf<EmitterLabel>();
-                stringHandler.Write("try");
+                dumpHandler.Write("try");
                 return;
             }
             case ILGeneratorMethod.EndExceptionBlock:
             {
-                stringHandler.Write("end try");
+                dumpHandler.Write("end try");
                 return;
             }
             case ILGeneratorMethod.BeginFaultBlock:
             {
-                stringHandler.Write("fault");
+                dumpHandler.Write("fault");
                 return;
             }
             case ILGeneratorMethod.BeginFinallyBlock:
             {
-                stringHandler.Write("finally");
+                dumpHandler.Write("finally");
                 return;
             }
             case ILGeneratorMethod.BeginScope:
             {
-                stringHandler.Write("scope {");
+                dumpHandler.Write("scope {");
                 return;
             }
             case ILGeneratorMethod.EndScope:
             {
-                stringHandler.Write("} end scope");
+                dumpHandler.Write("} end scope");
                 return;
             }
             case ILGeneratorMethod.UsingNamespace:
             {
                 var @namespace = Argument.ValidateInstanceOf<string>();
-                stringHandler.Write("using ");
-                stringHandler.Write(@namespace);
+                dumpHandler.Write("using ");
+                dumpHandler.Write(@namespace);
                 return;
             }
             case ILGeneratorMethod.DeclareLocal:
             {
                 var local = Argument.ValidateInstanceOf<EmitterLocal>();
-                local.DumpTo(ref stringHandler, "D");
+                local.DumpTo(ref dumpHandler, "D");
                 return;
             }
             case ILGeneratorMethod.DefineLabel:
             {
                 var label = Argument.ValidateInstanceOf<EmitterLabel>();
-                label.DumpTo(ref stringHandler, "D");
+                label.DumpTo(ref dumpHandler, "D");
                 return;
             }
             case ILGeneratorMethod.MarkLabel:
             {
                 var label = Argument.ValidateInstanceOf<EmitterLabel>();
-                label.DumpTo(ref stringHandler, "M");
+                label.DumpTo(ref dumpHandler, "M");
                 return;
             }
             case ILGeneratorMethod.EmitCall:
@@ -200,11 +200,11 @@ public sealed class GeneratorInstruction : Instruction
                 var method = ArgumentArray[0].ValidateInstanceOf<MethodInfo>();
                 var types = ArgumentArray[1].ValidateInstanceOf<Type[]>();
                 // varargs method
-                stringHandler.Write("varargs ");
-                stringHandler.Dump(method);
-                stringHandler.Write(" [");
-                stringHandler.DumpDelimited(", ", types);
-                stringHandler.Write(']');
+                dumpHandler.Write("varargs ");
+                dumpHandler.Dump(method);
+                dumpHandler.Write(" [");
+                dumpHandler.DumpDelimited(", ", types);
+                dumpHandler.Write(']');
                 return;
             }
             case ILGeneratorMethod.EmitCalli:
@@ -216,13 +216,13 @@ public sealed class GeneratorInstruction : Instruction
                     var callingConvention = args[0].ValidateInstanceOf<CallingConvention>();
                     var returnType = args[1].ValidateInstanceOf<Type>();
                     var parameterTypes = args[2].ValidateInstanceOf<Type[]>();
-                    stringHandler.Write("calli ");
-                    stringHandler.Write(callingConvention);
-                    stringHandler.Write(' ');
-                    stringHandler.Dump(returnType);
-                    stringHandler.Write('(');
-                    stringHandler.DumpDelimited(", ", parameterTypes);
-                    stringHandler.Write(')');
+                    dumpHandler.Write("calli ");
+                    dumpHandler.Write(callingConvention);
+                    dumpHandler.Write(' ');
+                    dumpHandler.Dump(returnType);
+                    dumpHandler.Write('(');
+                    dumpHandler.DumpDelimited(", ", parameterTypes);
+                    dumpHandler.Write(')');
                 }
                 else if (args.Length == 4)
                 {
@@ -230,18 +230,18 @@ public sealed class GeneratorInstruction : Instruction
                     var returnType = args[1].ValidateInstanceOf<Type>();
                     var parameterTypes = args[2].ValidateInstanceOf<Type[]>();
                     var optParameterTypes = args[3].ValidateInstanceOf<Type[]>();
-                    stringHandler.Write("calli ");
-                    stringHandler.Write(callingConvention);
-                    stringHandler.Write(' ');
-                    stringHandler.Dump(returnType);
-                    stringHandler.Write('(');
-                    stringHandler.DumpDelimited(", ", parameterTypes);
+                    dumpHandler.Write("calli ");
+                    dumpHandler.Write(callingConvention);
+                    dumpHandler.Write(' ');
+                    dumpHandler.Dump(returnType);
+                    dumpHandler.Write('(');
+                    dumpHandler.DumpDelimited(", ", parameterTypes);
                     if (optParameterTypes.Length > 0)
                     {
-                        stringHandler.Write("?, ");
-                        stringHandler.DumpDelimited(", ", optParameterTypes);
+                        dumpHandler.Write("?, ");
+                        dumpHandler.DumpDelimited(", ", optParameterTypes);
                     }
-                    stringHandler.Write(')');
+                    dumpHandler.Write(')');
                 }
                 else
                 {
@@ -251,33 +251,33 @@ public sealed class GeneratorInstruction : Instruction
             }
             case ILGeneratorMethod.WriteLine:
             {
-                stringHandler.Write("Console.WriteLine(");
+                dumpHandler.Write("Console.WriteLine(");
                 if (Argument is string text)
                 {
-                    stringHandler.Write('"');
-                    stringHandler.Write(text);
-                    stringHandler.Write('"');
+                    dumpHandler.Write('"');
+                    dumpHandler.Write(text);
+                    dumpHandler.Write('"');
                 }
                 else if (Argument is FieldInfo field)
                 {
-                    stringHandler.Dump(field);
+                    dumpHandler.Dump(field);
                 }
                 else if (Argument is EmitterLocal local)
                 {
-                    local.DumpTo(ref stringHandler);
+                    local.DumpTo(ref dumpHandler);
                 }
                 else
                 {
                     throw new InvalidOperationException();
                 }
-                stringHandler.Write(')');
+                dumpHandler.Write(')');
                 return;
             }
             case ILGeneratorMethod.ThrowException:
             {
                 var exceptionType = Argument.ValidateInstanceOf<Type>();
-                stringHandler.Write("throw new ");
-                stringHandler.Dump(exceptionType);
+                dumpHandler.Write("throw new ");
+                dumpHandler.Dump(exceptionType);
                 return;
             }
             default:

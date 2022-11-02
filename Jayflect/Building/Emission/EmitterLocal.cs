@@ -3,10 +3,14 @@ using Jay.Dumping.Interpolated;
 
 namespace Jayflect.Building.Emission;
 
-public sealed class EmitterLocal : IEquatable<EmitterLocal>, IEquatable<LocalBuilder>, IDumpable
+public sealed class EmitterLocal : 
+    IEquatable<EmitterLocal>, 
+    IEquatable<LocalBuilder>,
+    IEquatable<LocalVariableInfo>,
+    IDumpable
 {
     public static implicit operator LocalBuilder(EmitterLocal local) => local._localBuilder;
-
+    
     public static bool operator ==(EmitterLocal left, EmitterLocal right) =>
         LocalBuilderEqualityComparer.Default.Equals(left._localBuilder, right._localBuilder);
     public static bool operator !=(EmitterLocal left, EmitterLocal right) =>
@@ -63,6 +67,14 @@ public sealed class EmitterLocal : IEquatable<EmitterLocal>, IEquatable<LocalBui
                localBuilder.IsPinned == _localBuilder.IsPinned;
     }
 
+    public bool Equals(LocalVariableInfo? localVariableInfo)
+    {
+        return localVariableInfo is not null &&
+               localVariableInfo.LocalIndex == _localBuilder.LocalIndex &&
+               localVariableInfo.LocalType == _localBuilder.LocalType &&
+               localVariableInfo.IsPinned == _localBuilder.IsPinned;
+    }
+
     public override bool Equals(object? obj)
     {
         if (obj is EmitterLocal emitterLocal) return Equals(emitterLocal);
@@ -74,26 +86,26 @@ public sealed class EmitterLocal : IEquatable<EmitterLocal>, IEquatable<LocalBui
         return Index;
     }
 
-    public void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public void DumpTo(ref DumpStringHandler dumpHandler, DumpFormat dumpFormat = default)
     {
         // Declare or Use, defaults to Use
         if (dumpFormat == "D")
         {
             // [#] (pinned) type Name
-            stringHandler.Write('[');
-            stringHandler.Write(Index);
-            stringHandler.Write("] ");
+            dumpHandler.Write('[');
+            dumpHandler.Write(Index);
+            dumpHandler.Write("] ");
             if (_localBuilder.IsPinned)
             {
-                stringHandler.Write("pinned ");
+                dumpHandler.Write("pinned ");
             }
-            stringHandler.Dump(Type);
-            stringHandler.Write(' ');
-            stringHandler.Write(Name);
+            dumpHandler.Dump(Type);
+            dumpHandler.Write(' ');
+            dumpHandler.Write(Name);
         }
         else
         {
-            stringHandler.Write(Name);
+            dumpHandler.Write(Name);
         }
     }
     

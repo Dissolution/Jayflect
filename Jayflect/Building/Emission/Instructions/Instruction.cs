@@ -13,5 +13,5 @@ public abstract class Instruction : IEquatable<Instruction>, IDumpable
     
     public abstract bool Equals(Instruction? instruction);
 
-    public abstract void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default);
+    public abstract void DumpTo(ref DumpStringHandler dumpHandler, DumpFormat dumpFormat = default);
 }

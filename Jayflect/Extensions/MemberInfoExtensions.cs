@@ -42,7 +42,7 @@ public static class MemberInfoExtensions
         return true;
     }
 
-    public static Visibility Visibility(this MemberInfo? memberInfo)
+    public static Visibility GetVisibility(this MemberInfo? memberInfo)
     {
         if (memberInfo is FieldInfo fieldInfo)
             return fieldInfo.Visibility();

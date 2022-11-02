@@ -1,5 +1,6 @@
 ﻿using Jay.Extensions;
 using Jayflect.Building.Emission;
+using Jayflect.Searching;
 
 namespace Jayflect.Building;
 
@@ -124,7 +125,7 @@ public static class RuntimeBuilder
     public static CustomAttributeBuilder GetCustomAttributeBuilder<TAttribute>(params object[] ctorArgs)
         where TAttribute : Attribute
     {
-        var ctor = Reflect.FindConstructor(typeof(TAttribute), ctorArgs);
+        var ctor = MemberSearch.FindConstructor(typeof(TAttribute), ctorArgs);
         return new CustomAttributeBuilder(ctor, ctorArgs);
     }
 
@@ -132,7 +133,7 @@ public static class RuntimeBuilder
     {
         if (!attributeType.Implements<Attribute>())
             throw new ArgumentException(Dump($"{attributeType} is not an Attribute"));
-        var ctor = Reflect.FindConstructor(attributeType, ctorArgs);
+        var ctor = MemberSearch.FindConstructor(attributeType, ctorArgs);
         return new CustomAttributeBuilder(ctor, ctorArgs);
     }
 }

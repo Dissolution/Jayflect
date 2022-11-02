@@ -96,6 +96,11 @@ public ref struct DumpStringHandler
         }
     }
 
+    public void WriteLine()
+    {
+        _charSpanBuilder.AppendLiteral(Environment.NewLine);
+    }
+
     public void Dump<T>(T? value, DumpFormat dumpFormat = default)
     {
         if (value is IEnumerable enumerable)

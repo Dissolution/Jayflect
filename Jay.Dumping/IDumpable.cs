@@ -4,7 +4,7 @@ namespace Jay.Dumping;
 
 public interface IDumpable : ISpanFormattable, IFormattable
 {
-    void DumpTo(ref DumpStringHandler dumpStringHandler, DumpFormat format = default);
+    void DumpTo(ref DumpStringHandler dumpHandler, DumpFormat format = default);
 
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {

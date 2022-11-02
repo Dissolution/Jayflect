@@ -1,9 +1,7 @@
-﻿using System.ComponentModel.Design;
-using Jay;
+﻿using Jay;
 using Jay.Dumping.Interpolated;
 using Jayflect.Building.Emission;
 using Jayflect.Exceptions;
-using Jayflect.Extensions;
 
 namespace Jayflect.Building.Adaption;
 
@@ -198,6 +196,7 @@ public class RuntimeMethodAdapter
         Arg instanceArg = DelegateSig.Parameters[0];
         result = instanceArg.TryLoadAs(this.Emitter, instanceType);
         if (!result) return result;
+        
         // Check for Params
         result = TryLoadParams(1);
         if (result) return true;

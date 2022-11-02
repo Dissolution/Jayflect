@@ -2,6 +2,7 @@
 using Jay.Comparison;
 using Jay.Dumping.Interpolated;
 using Jayflect.Building;
+using Jayflect.Searching;
 
 namespace Jayflect.Exceptions;
 
@@ -15,10 +16,7 @@ public class JayflectException : Exception
 
     static JayflectException()
     {
-        var exMessageField = Reflect.FindField(typeof(Exception),
-            "_message",
-            BindingFlags.NonPublic | BindingFlags.Instance,
-            typeof(string));
+        var exMessageField = MemberSearch.FindField<Exception>(new("_message", Visibility.NonPublic | Visibility.Instance, typeof(string)));
         _setExceptionMessage = RuntimeBuilder.CreateDelegate<Action<Exception, string?>>(
             "Exception_set_Message",
             emitter => emitter
@@ -27,10 +25,7 @@ public class JayflectException : Exception
                 .Stfld(exMessageField)
                 .Ret());
 
-        var exInnerExField = Reflect.FindField(typeof(Exception),
-            "_innerException",
-            BindingFlags.NonPublic | BindingFlags.Instance,
-            typeof(Exception));
+        var exInnerExField = MemberSearch.FindField<Exception>(new("_innerException", Visibility.NonPublic | Visibility.Instance, typeof(Exception)));
         _setExceptionInnerException = RuntimeBuilder.CreateDelegate<Action<Exception, Exception?>>(
             "Exception_set_InnerException",
             emitter => emitter

@@ -1,4 +1,6 @@
-﻿namespace Jayflect.Extensions;
+﻿using Jayflect.Searching;
+
+namespace Jayflect.Extensions;
 
 public static class TypeExtensions
 {
@@ -16,6 +18,10 @@ public static class TypeExtensions
     {
         var visibility = Jayflect.Visibility.None;
         if (type is null) return visibility;
+        if (type.IsStatic())
+            visibility |= Jayflect.Visibility.Static;
+        else
+            visibility |= Jayflect.Visibility.Instance;
         if (IsPublic(type))
             visibility |= Jayflect.Visibility.Public;
         if (IsInternal(type))
@@ -98,14 +104,20 @@ public static class TypeExtensions
     
     static TypeExtensions()
     {
-        _isReferenceMethod = Reflect.FindMember(() => typeof(RuntimeHelpers)
-            .GetMethod(nameof(RuntimeHelpers.IsReferenceOrContainsReferences),
-                Reflect.Flags.PublicStatic,
-                Type.EmptyTypes));
-        _sizeOfMethod = Reflect.FindMember(() => typeof(Unsafe)
-            .GetMethod(nameof(Unsafe.SizeOf),
-                Reflect.Flags.PublicStatic,
-                Type.EmptyTypes));
+        _isReferenceMethod = MemberSearch.FindMethod(typeof(RuntimeHelpers), new()
+            {
+                Name = nameof(RuntimeHelpers.IsReferenceOrContainsReferences),
+                Visibility = Jayflect.Visibility.Public | Jayflect.Visibility.Static,
+                ReturnType = typeof(bool),
+                ParameterTypes = Type.EmptyTypes,
+            });
+        _sizeOfMethod = MemberSearch.FindMethod(typeof(Danger), new()
+            {
+                Name = nameof(Danger.SizeOf),
+                Visibility = Jayflect.Visibility.Public | Jayflect.Visibility.Static,
+                ReturnType = typeof(int),
+                ParameterTypes = Type.EmptyTypes,
+            });
     }
 
     public static bool IsReferenceOrContainsReferences(this Type type)

@@ -74,4 +74,9 @@ public static class EnumerableExtensions
             }
         }
     }
+
+    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
+    {
+        return source.Where(value => value is not null)!;
+    }
 }

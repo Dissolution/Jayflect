@@ -1,5 +1,5 @@
 ﻿using Jayflect.Building.Adaption;
-using Jayflect.Extensions;
+using Jayflect.Searching;
 
 
 namespace Jayflect.Building.Emission;
@@ -36,7 +36,7 @@ public static class EmitterExtensions
             .Beq(out var lenEqual)
             .Ldstr($"{length} parameters are required in the params array")
             .Ldstr(paramsParameter.Name)
-            .Newobj(Reflect.FindConstructor<ArgumentException>(typeof(string), typeof(string)))
+            .Newobj(MemberSearch.FindConstructor<ArgumentException>(typeof(string), typeof(string)))
             .Throw()
             .MarkLabel(lenEqual);
     }

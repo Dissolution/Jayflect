@@ -1,44 +1,54 @@
-﻿using System.Diagnostics;
+﻿#pragma warning disable CS0659, CS0660, CS0661
+
+using System.Diagnostics;
 using Jay;
 using Jay.Extensions;
 using Jayflect.Building.Emission;
 using Jayflect.Exceptions;
+
 
 namespace Jayflect.Building.Adaption;
 
 public abstract class Arg : IEquatable<Arg>
 {
     public static implicit operator Arg(ParameterInfo parameter) => new ParameterArg(parameter);
-    public static implicit operator Arg(Type type) => new TypeArg(type);
-
+    public static implicit operator Arg(Type type) => new StackArg(type);
+    public static implicit operator Arg(EmitterLocal local) => new LocalArg(local);
+   
     public static bool operator ==(Arg left, Arg right) => left.Equals(right);
     public static bool operator !=(Arg left, Arg right) => !left.Equals(right);
 
     public static Arg FromParameter(ParameterInfo parameter) => new ParameterArg(parameter);
-    public static Arg FromType(Type type) => new TypeArg(type);
-
-    public ParameterAccess Access { get; }
-
+    public static Arg FromType(Type type) => new StackArg(type);
+    public static Arg FromLocal(EmitterLocal local) => new LocalArg(local);
+   
+    
     public Type Type { get; }
-
-    public abstract bool IsOnStack { get; }
-
-    protected Arg(ParameterAccess access, Type type)
+    public bool IsByRef { get; }
+    public Type UnderType { get; }
+    
+    public bool IsOnStack { get; }
+    public bool PreferNonRef { get; }
+    
+    protected Arg(Type type, bool isOnStack, bool preferNonRef)
     {
-        this.Access = access;
         this.Type = type;
+        if (type.IsByRef)
+        {
+            IsByRef = true;
+            UnderType = type.GetElementType()!;
+        }
+        else
+        {
+            IsByRef = false;
+            UnderType = type;
+        }
+        this.IsOnStack = isOnStack;
+        this.PreferNonRef = preferNonRef;
     }
-    public void Deconstruct(out ParameterAccess access, out Type type)
-    {
-        access = this.Access;
-        type = this.Type;
-    }
-    public void Deconstruct(out Type type)
-    {
-        type = this.ToType();
-    }
-
+  
     protected abstract void Load(IFluentILEmitter emitter);
+    
     protected abstract void LoadAddress(IFluentILEmitter emitter);
 
     public Result CanLoadAs(Arg destArg, out int exactness)
@@ -57,17 +67,17 @@ public abstract class Arg : IEquatable<Arg>
         exactness = int.MaxValue;
 
         // Unimplemented fast check
-        if (Type.IsPointer || destArg.Type.IsPointer)
+        if (UnderType.IsPointer || destArg.UnderType.IsPointer)
             return GetNotImplementedEx();
 
         // ? -> void
-        if (destArg.Type == typeof(void))
+        if (destArg.UnderType == typeof(void))
         {
-            if (destArg.Access != ParameterAccess.Default)
+            if (destArg.IsByRef)
                 return GetNotImplementedEx();
 
             // Source is also void?
-            if (Type == typeof(void))
+            if (UnderType == typeof(void))
             {
                 exactness = 0;
             }
@@ -79,7 +89,7 @@ public abstract class Arg : IEquatable<Arg>
             return true;
         }
 
-        if (Type == typeof(void))
+        if (UnderType == typeof(void))
         {
             // Creating a value isn't great
             exactness = 10;
@@ -90,10 +100,10 @@ public abstract class Arg : IEquatable<Arg>
          * Needs to be checked early or it will be caught up in the
          * .Implements() check below
          */
-        if (destArg.Type == typeof(object))
+        if (destArg.UnderType == typeof(object))
         {
             // ?T -> object
-            if (destArg.Access != ParameterAccess.Default)
+            if (destArg.IsByRef)
                 return GetNotImplementedEx();
 
             // Boxing is fine
@@ -104,7 +114,7 @@ public abstract class Arg : IEquatable<Arg>
         /* ?object -> ?
          * Unboxing
          */
-        if (this.Type == typeof(object))
+        if (this.UnderType == typeof(object))
         {
             // Unboxing is fine
             exactness = 5;
@@ -112,7 +122,7 @@ public abstract class Arg : IEquatable<Arg>
         }
 
         // ?T -> ?T
-        if (this.Type == destArg.Type)
+        if (this.UnderType == destArg.UnderType)
         {
             // Exact is great
             exactness = 0;
@@ -123,10 +133,10 @@ public abstract class Arg : IEquatable<Arg>
          * Tests for implements, so we can autocast
          * This also takes care of interfaces
          */
-        if (this.Type.Implements(destArg.Type))
+        if (this.UnderType.Implements(destArg.UnderType))
         {
             // T:U -> U
-            if (this.Access != ParameterAccess.Default || destArg.Access != ParameterAccess.Default)
+            if (this.IsByRef || destArg.IsByRef)
                 return GetNotImplementedEx();
 
             // Pretty exact
@@ -156,13 +166,15 @@ public abstract class Arg : IEquatable<Arg>
         };
 
         // Unimplemented fast check
-        if (Type.IsPointer || destArg.Type.IsPointer)
+        if (UnderType.IsPointer || destArg.UnderType.IsPointer)
             return GetNotImplementedEx();
 
+        
+        
         // ? -> void
-        if (destArg.Type == typeof(void))
+        if (destArg.UnderType == typeof(void))
         {
-            if (destArg.Access != ParameterAccess.Default)
+            if (destArg.IsByRef)
                 return GetNotImplementedEx();
 
             // Anything on the stack we have to pop?
@@ -182,15 +194,15 @@ public abstract class Arg : IEquatable<Arg>
          * delegate to a `void Thing(?)` method.
          * In this case, we're just going to return `default(TReturn)`
          */
-        if (Type == typeof(void))
+        if (UnderType == typeof(void))
         {
-            if (destArg.Access == ParameterAccess.Default)
+            if (!destArg.IsByRef)
             {
-                emitter.LoadDefault(destArg.Type);
+                emitter.LoadDefault(destArg.UnderType);
             }
             else
             {
-                emitter.LoadDefaultAddress(destArg.Type);
+                emitter.LoadDefaultAddress(destArg.UnderType);
             }
 
             // done
@@ -201,10 +213,10 @@ public abstract class Arg : IEquatable<Arg>
          * Needs to be checked early or it will be caught up in the
          * .Implements() check below
          */
-        if (destArg.Type == typeof(object))
+        if (destArg.UnderType == typeof(object))
         {
             // ?T -> object
-            if (destArg.Access != ParameterAccess.Default)
+            if (destArg.IsByRef)
                 return GetNotImplementedEx();
 
             // We need to get a boxed value
@@ -213,16 +225,16 @@ public abstract class Arg : IEquatable<Arg>
             Load(emitter);
 
             // ref T -> object
-            if (this.Access != ParameterAccess.Default)
+            if (this.IsByRef)
             {
                 // get the T
-                emitter.Ldind(this.Type);
+                emitter.Ldind(this.UnderType);
             }
 
             // If we're not already typeof(object), box us
-            if (this.Type != typeof(object))
+            if (this.UnderType != typeof(object))
             {
-                emitter.Box(this.Type);
+                emitter.Box(this.UnderType);
             }
 
             return true;
@@ -231,7 +243,7 @@ public abstract class Arg : IEquatable<Arg>
         /* ?object -> ?
          * Unboxing
          */
-        if (this.Type == typeof(object))
+        if (this.UnderType == typeof(object))
         {
             // We need to unbox a value
 
@@ -244,38 +256,38 @@ public abstract class Arg : IEquatable<Arg>
             Load(emitter);
 
             // ref object -> object
-            if (this.Access != ParameterAccess.Default)
+            if (this.IsByRef)
             {
-                emitter.Ldind(this.Type);
+                emitter.Ldind(this.UnderType);
             }
 
             // object -> T
-            if (destArg.Access == ParameterAccess.Default)
+            if (!destArg.IsByRef)
             {
                 // object -> struct
-                if (destArg.Type.IsValueType)
+                if (destArg.UnderType.IsValueType)
                 {
-                    emitter.Unbox_Any(destArg.Type);
+                    emitter.Unbox_Any(destArg.UnderType);
                 }
                 // object -> class
                 else
                 {
-                    emitter.Castclass(destArg.Type);
+                    emitter.Castclass(destArg.UnderType);
                 }
             }
             // object -> ref T
             else
             {
                 // object -> ref struct
-                if (destArg.Type.IsValueType)
+                if (destArg.UnderType.IsValueType)
                 {
-                    emitter.Unbox(destArg.Type);
+                    emitter.Unbox(destArg.UnderType);
                 }
                 // object -> ref class
                 else
                 {
-                    emitter.Castclass(destArg.Type)
-                        .DeclareLocal(destArg.Type, out var localDest)
+                    emitter.Castclass(destArg.UnderType)
+                        .DeclareLocal(destArg.UnderType, out var localDest)
                         .Stloc(localDest)
                         .Ldloca(localDest);
                 }
@@ -286,13 +298,13 @@ public abstract class Arg : IEquatable<Arg>
         }
 
         // ?T -> ?T
-        if (this.Type == destArg.Type)
+        if (this.UnderType == destArg.UnderType)
         {
             // T -> ?T
-            if (this.Access == ParameterAccess.Default)
+            if (!this.IsByRef)
             {
                 // T -> T
-                if (this.Access == ParameterAccess.Default)
+                if (!destArg.IsByRef)
                 {
                     // Ensure value is on stack
                     Load(emitter);
@@ -307,7 +319,7 @@ public abstract class Arg : IEquatable<Arg>
                     }
                     else
                     {
-                        emitter.DeclareLocal(this.Type, out var localSource)
+                        emitter.DeclareLocal(this.UnderType, out var localSource)
                             .Stloc(localSource)
                             .Ldloca(localSource);
                     }
@@ -317,12 +329,12 @@ public abstract class Arg : IEquatable<Arg>
             else
             {
                 // ref T -> T
-                if (destArg.Access == ParameterAccess.Default)
+                if (!destArg.IsByRef)
                 {
                     // Ensure value is on stack
                     Load(emitter);
 
-                    emitter.Ldind(this.Type);
+                    emitter.Ldind(this.UnderType);
                 }
                 // ref T -> ref T
                 else
@@ -340,17 +352,17 @@ public abstract class Arg : IEquatable<Arg>
          * Tests for implements, so we can autocast
          * This also takes care of interfaces
          */
-        if (this.Type.Implements(destArg.Type))
+        if (this.UnderType.Implements(destArg.UnderType))
         {
             // T:U -> U
-            if (this.Access != ParameterAccess.Default || destArg.Access != ParameterAccess.Default)
+            if (this.IsByRef || destArg.IsByRef)
                 return GetNotImplementedEx();
 
             // struct T:U -> U
-            if (this.Type.IsValueType)
+            if (this.UnderType.IsValueType)
             {
                 // We have to be converting to an interface
-                if (!destArg.Type.IsInterface)
+                if (!destArg.UnderType.IsInterface)
                     throw new InvalidOperationException();
                 Debugger.Break();
 
@@ -358,7 +370,7 @@ public abstract class Arg : IEquatable<Arg>
                 Load(emitter);
 
                 // this works?
-                emitter.Castclass(destArg.Type);
+                emitter.Castclass(destArg.UnderType);
             }
             // class T:U -> U
             else
@@ -366,7 +378,7 @@ public abstract class Arg : IEquatable<Arg>
                 // Ensure value is on stack
                 Load(emitter);
 
-                emitter.Castclass(destArg.Type);
+                emitter.Castclass(destArg.UnderType);
             }
 
             // done
@@ -377,39 +389,14 @@ public abstract class Arg : IEquatable<Arg>
         return GetNotImplementedEx();
     }
 
-    public virtual Type ToType()
-    {
-        if (Access != ParameterAccess.Default)
-        {
-            return this.Type.MakeByRefType();
-        }
-        else
-        {
-            return this.Type;
-        }
-    }
-
-    public bool Equals(Arg? arg)
-    {
-        return arg is not null &&
-               arg.Access == this.Access &&
-               arg.Type == this.Type;
-    }
+    public abstract bool Equals(Arg? arg);
 
     public sealed override bool Equals(object? obj)
     {
         return obj is Arg arg && Equals(arg);
     }
 
-    public sealed override int GetHashCode()
-    {
-        return Hasher.GetHashCode(Access, Type);
-    }
+    // Remember: have to override GetHashCode() in implementations
 
-    public override string ToString()
-    {
-        if (Access == ParameterAccess.Default)
-            return Dump(Type);
-        return Dump($"{Access} {Type}");
-    }
+    // Same for ToString()
 }

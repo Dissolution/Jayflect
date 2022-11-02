@@ -66,25 +66,25 @@ public sealed class EmitterLabel : IEquatable<EmitterLabel>, IEquatable<Label>, 
         return Value;
     }
 
-    public void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public void DumpTo(ref DumpStringHandler dumpHandler, DumpFormat dumpFormat = default)
     {
         // Mark (where the label is)
         if (dumpFormat == "M")
         {
-            stringHandler.Write(Name);
-            stringHandler.Write(':');
+            dumpHandler.Write(Name);
+            dumpHandler.Write(':');
         }
         // Declare (when it is declared
         else if (dumpFormat == "D")
         {
-            stringHandler.Write("declare :");
-            stringHandler.Write(Name);
-            stringHandler.Write(":");
+            dumpHandler.Write("declare :");
+            dumpHandler.Write(Name);
+            dumpHandler.Write(":");
         }
         // Use
         else
         {
-            stringHandler.Write(Name);
+            dumpHandler.Write(Name);
         }
     }
 

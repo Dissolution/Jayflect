@@ -1,16 +1,21 @@
 ﻿using Jayflect.Building.Emission;
-using Jayflect.Extensions;
 
 namespace Jayflect.Building.Adaption;
 
 internal sealed class ParameterArg : Arg
 {
+    private static Type GetType(ParameterInfo parameter)
+    {
+        var type = parameter.ParameterType;
+        if ((parameter.IsIn || parameter.IsOut) && !type.IsByRef) 
+            return type.MakeByRefType();
+        return type;
+    }
+    
     private readonly ParameterInfo _parameterInfo;
     
-    public override bool IsOnStack => false;
-
     public ParameterArg(ParameterInfo parameterInfo)
-        : base(parameterInfo.GetAccess(out var parameterType), parameterType)
+        : base(GetType(parameterInfo), false, false)
     {
         _parameterInfo = parameterInfo;
     }
@@ -22,6 +27,17 @@ internal sealed class ParameterArg : Arg
     protected override void LoadAddress(IFluentILEmitter emitter)
     {
         emitter.Ldarga(_parameterInfo.Position);
+    }
+
+    public override bool Equals(Arg? arg)
+    {
+        return arg is ParameterArg parameterArg &&
+               parameterArg._parameterInfo == _parameterInfo;
+    }
+    
+    public override int GetHashCode()
+    {
+        return _parameterInfo.GetHashCode();
     }
 
     public override string ToString()

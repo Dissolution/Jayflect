@@ -5,7 +5,6 @@ using Jayflect.Building.Adaption;
 using Jayflect.Building.Emission;
 using Jayflect.Caching;
 using Jayflect.Exceptions;
-using Jayflect.Extensions;
 
 namespace Jayflect;
 

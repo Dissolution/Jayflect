@@ -8,7 +8,7 @@ public sealed class OpInstruction : Instruction
 {
     public OpCode OpCode { get; }
 
-    public object? Value { get; }
+    public object? Value { get; internal set; }
 
     public int Size
     {
@@ -66,36 +66,36 @@ public sealed class OpInstruction : Instruction
                DefaultComparers.Instance.Equals(opInstruction.Value, this.Value);
     }
 
-    public override void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public override void DumpTo(ref DumpStringHandler dumpHandler, DumpFormat dumpFormat = default)
     {
-        stringHandler.Write(OpCode.Name);
+        dumpHandler.Write(OpCode.Name);
         if (Value is not null)
         {
-            stringHandler.Write(' ');
+            dumpHandler.Write(' ');
 
             if (Value is Instruction instruction)
             {
-                instruction.DumpTo(ref stringHandler, dumpFormat);
+                instruction.DumpTo(ref dumpHandler, dumpFormat);
             }
             else if (Value is Instruction[] instructions)
             {
-                stringHandler.Write('[');
-                stringHandler.DumpDelimited(", ", instructions);
-                stringHandler.Write(']');
+                dumpHandler.Write('[');
+                dumpHandler.DumpDelimited(", ", instructions);
+                dumpHandler.Write(']');
             }
             else if (Value is string str)
             {
-                stringHandler.Write('"');
-                stringHandler.Write(str);
-                stringHandler.Write('"');
+                dumpHandler.Write('"');
+                dumpHandler.Write(str);
+                dumpHandler.Write('"');
             }
             else if (Value is IDumpable dumpable)
             {
-                dumpable.DumpTo(ref stringHandler, dumpFormat);
+                dumpable.DumpTo(ref dumpHandler, dumpFormat);
             }
             else
             {
-                stringHandler.Dump(Value);
+                dumpHandler.Dump(Value);
             }
         }
     }

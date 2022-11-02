@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
-using Jay.Validation;
 using Jayflect.Exceptions;
+using Jayflect.Searching;
 
 // I use _ in 'constant' member names for readability
 // ReSharper disable InconsistentNaming
@@ -11,29 +11,32 @@ public static class MemberCache
 {
     internal static class Methods
     {
-        public static MethodInfo Type_GetTypeFromHandle { get; } = 
-            Reflect.FindMember<MethodInfo>(() => Type.GetTypeFromHandle(default));
+        public static MethodInfo Type_GetTypeFromHandle { get; } =
+            MemberSearch.FindMethod<Type>(new(
+                nameof(Type.GetTypeFromHandle),
+                Visibility.Public | Visibility.Static,
+                typeof(Type),
+                typeof(RuntimeTypeHandle)));
 
         public static MethodInfo Delegate_GetInvocationList { get; } =
-            typeof(Delegate).GetMethod(
-                    nameof(Delegate.GetInvocationList),
-                    BindingFlags.Public | BindingFlags.Instance,
-                    Type.EmptyTypes)
-                .ValidateNotNull();
+            MemberSearch.FindMethod<Delegate>(new(
+                nameof(Delegate.GetInvocationList), 
+                Visibility.Public | Visibility.Instance, 
+                typeof(Delegate[])));
+
 
         public static MethodInfo RuntimeHelpers_GetUninitializedObject { get; } =
-            typeof(RuntimeHelpers).GetMethod(
+            MemberSearch.FindMethod(typeof(RuntimeHelpers), new(
                     nameof(RuntimeHelpers.GetUninitializedObject),
-                    BindingFlags.Public | BindingFlags.Static,
-                    new Type[1] { typeof(Type)})
-                .ValidateNotNull();
+                    Visibility.Public | Visibility.Static,
+                    typeof(object),
+                    typeof(Type)));
 
         public static MethodInfo Object_GetType { get; } =
-            typeof(object).GetMethod(
+            MemberSearch.FindMethod<object>(new(
                     nameof(object.GetType),
-                    BindingFlags.Public | BindingFlags.Instance,
-                    Type.EmptyTypes)
-                .ValidateNotNull();
+                    Visibility.Public | Visibility.Instance,
+                    typeof(Type)));
     }
     
     private static readonly ConcurrentDictionary<string, MemberInfo> _stringMemberCache = new();

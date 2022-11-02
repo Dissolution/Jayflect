@@ -1,6 +1,4 @@
-﻿using Jayflect.Extensions;
-
-namespace Jayflect;
+﻿namespace Jayflect;
 
 public sealed class ParameterSignature : IEquatable<ParameterSignature>
 {

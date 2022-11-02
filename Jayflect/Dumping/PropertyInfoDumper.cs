@@ -1,6 +1,5 @@
 ﻿using Jay.Dumping;
 using Jay.Dumping.Interpolated;
-using Jayflect.Extensions;
 
 namespace Jayflect.Dumping;
 

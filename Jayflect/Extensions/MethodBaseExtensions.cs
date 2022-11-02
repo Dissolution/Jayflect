@@ -9,6 +9,10 @@ public static class MethodBaseExtensions
         Visibility visibility = Jayflect.Visibility.None;
         if (method is null)
             return visibility;
+        if (method.IsStatic)
+            visibility |= Jayflect.Visibility.Static;
+        else
+            visibility |= Jayflect.Visibility.Instance;
         if (method.IsPrivate)
             visibility |= Jayflect.Visibility.Private;
         if (method.IsFamily)

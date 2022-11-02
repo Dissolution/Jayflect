@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using ConsoleSandbox;
 using Jayflect;
+using Jayflect.Serialization;
 
 #pragma warning disable
 
@@ -28,12 +29,13 @@ try
     // name = reflection.Name();
     // Console.WriteLine(name);
 
-    var tc = new TestClass();
+    var tc = new TestEntity(666);
     //var reflection = DynamicReflection.Of(tc);
-    var reflection = DynamicReflection.Of(147);
+    //var reflection = DynamicReflection.Of(147);
 
-    bool isFour = reflection == 4;
-    
+    //bool isFour = reflection == 4;
+
+    var parts = ChopShop.PartOut(tc);
     
     Debugger.Break();
 
@@ -46,6 +48,17 @@ catch (Exception mainException)
 
 namespace ConsoleSandbox
 {
+    public class TestEntity
+    {
+        public int Id { get; init; }
+        public string Name { get; set; }
+
+        public TestEntity(int id)
+        {
+            this.Id = id;
+        }
+    }
+    
     public class TestClass
     {
         public static bool operator false(TestClass testClass) => false;

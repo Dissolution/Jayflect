@@ -122,6 +122,14 @@ public readonly partial struct Result
             return default;
         }
     }*/
+
+    public delegate Result OutResult<T>(out T value);
+
+    public static T Invoke<T>(OutResult<T> outResult)
+    {
+        outResult(out T value).ThrowIfFailed();
+        return value;
+    }
     
     /// <summary>
     /// Invokes the <paramref name="func"/> and returns its result.

@@ -21,9 +21,9 @@ public class InstructionStream : LinkedList<InstructionLine>, IDumpable
         return null;
     }
 
-    public void DumpTo(ref DumpStringHandler stringHandler, DumpFormat dumpFormat = default)
+    public void DumpTo(ref DumpStringHandler dumpHandler, DumpFormat dumpFormat = default)
     {
-        stringHandler.DumpDelimited(Environment.NewLine, this, dumpFormat);
+        dumpHandler.DumpDelimited(Environment.NewLine, this, dumpFormat);
     }
 
     public void RemoveAfter(LinkedListNode<InstructionLine>? node)

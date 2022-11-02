@@ -29,7 +29,7 @@ public readonly ref struct DumpFormat
     public static DumpFormat WithType
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => new DumpFormat("W:Type");
+        get => new DumpFormat("V");
     }
    
 
@@ -56,7 +56,7 @@ public readonly ref struct DumpFormat
     public bool IsWithType
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _formatSpan == "W:Type";
+        get => _formatSpan == "V";
     }
 
     public bool IsCustom => !IsNone && !IsWithType;
@@ -69,7 +69,7 @@ public readonly ref struct DumpFormat
     public string? GetCustomFormatString()
     {
         var format = _formatSpan;
-        if (format.Length > 0 && format != "W:Type")
+        if (format.Length > 0 && format != "V")
         {
             return new string(format);
         }
