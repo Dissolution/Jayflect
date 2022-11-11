@@ -1,10 +1,9 @@
-﻿using Jayflect.Building.Adaption;
+﻿using System.Diagnostics;
+using Jayflect.Building.Adaption;
 
 namespace Jayflect.Searching;
 
-
-
-public sealed class MemberSearchOptions
+public sealed record class MemberSearchOptions
 {
     public Visibility Visibility { get; init; } = Visibility.Any;
     public string? Name { get; init; } = null;
@@ -18,23 +17,11 @@ public sealed class MemberSearchOptions
         
     }
     
-    public MemberSearchOptions(Visibility visibility)
-    {
-        this.Visibility = visibility;
-    }
-    public MemberSearchOptions(string? name, Visibility visibility)
-    {
-        this.Name = name;
-        this.Visibility = visibility;
-    }
-    public MemberSearchOptions(string? name, Visibility visibility, Type type)
-    {
-        this.Name = name;
-        this.Visibility = visibility;
-        this.ReturnType = type;
-    }
-    
-    public MemberSearchOptions(string? name, Visibility visibility, Type returnType, params Type[] parameterTypes)
+    public MemberSearchOptions(
+        string? name = null, 
+        Visibility visibility = Visibility.Any, 
+        Type? returnType = null, 
+        params Type[]? parameterTypes)
     {
         this.Name = name;
         this.Visibility = visibility;
@@ -43,7 +30,7 @@ public sealed class MemberSearchOptions
     }
     
     
-    private bool MatchName(string memberName)
+    private bool MatchesName(string memberName)
     {
         if (Name is null) return true;
         if (memberName.Length < Name.Length) return false;
@@ -89,7 +76,7 @@ public sealed class MemberSearchOptions
 
         }
     }
-    private bool MatchReturnType(Type returnType)
+    private bool MatchesReturnType(Type returnType)
     {
         if (ReturnType is null) return true;
         if (ConvertableTypeMatch)
@@ -104,7 +91,7 @@ public sealed class MemberSearchOptions
         }
         return true;
     }
-    private bool MatchParameterType(Type sourceType, Type destType)
+    private bool MatchesParameterType(Type sourceType, Type destType)
     {
         if (ConvertableTypeMatch)
         {
@@ -118,13 +105,13 @@ public sealed class MemberSearchOptions
         }
         return true;
     }
-    private bool MatchParameterTypes(Type[] argTypes)
+    private bool MatchesParameterTypes(Type[] argTypes)
     {
         if (ParameterTypes is null) return true;
         if (ParameterTypes.Length != argTypes.Length) return false;
         for (var i = 0; i < argTypes.Length; i++)
         {
-            if (!MatchParameterType(ParameterTypes[i], argTypes[i]))
+            if (!MatchesParameterType(ParameterTypes[i], argTypes[i]))
                 return false;
         }
         return true;
@@ -133,46 +120,46 @@ public sealed class MemberSearchOptions
     public bool Matches(MemberInfo member)
     {
         // We always know visibility matches, as we passed it to get this member
-        // TODO: DEBUG THIS
+        var f = Visibility.HasAll(member.GetVisibility());
+        Debugger.Break();
 
-        if (!MatchName(member.Name)) return false;
+        if (!MatchesName(member.Name)) return false;
 
         if (member is FieldInfo field)
         {
-            if (!MatchReturnType(field.FieldType)) return false;
-            if (!MatchParameterTypes(Type.EmptyTypes)) return false;
+            if (!MatchesReturnType(field.FieldType)) return false;
+            if (!MatchesParameterTypes(Type.EmptyTypes)) return false;
             return true;
         }
         
         if (member is PropertyInfo property)
         {
-            if (!MatchReturnType(property.PropertyType)) return false;
-            if (!MatchParameterTypes(property.GetIndexParameterTypes())) return false;
+            if (!MatchesReturnType(property.PropertyType)) return false;
+            if (!MatchesParameterTypes(property.GetIndexParameterTypes())) return false;
             return true;
         }
         
         if (member is EventInfo eventInfo)
         {
-            if (!MatchReturnType(eventInfo.EventHandlerType!)) return false;
-            if (!MatchParameterTypes(Type.EmptyTypes)) return false;
+            if (!MatchesReturnType(eventInfo.EventHandlerType!)) return false;
+            if (!MatchesParameterTypes(Type.EmptyTypes)) return false;
             return true;
         }
         
         if (member is ConstructorInfo ctor)
         {
-            if (!MatchReturnType(ctor.DeclaringType!)) return false;
-            if (!MatchParameterTypes(ctor.GetParameterTypes())) return false;
-                return true;
+            if (!MatchesReturnType(ctor.DeclaringType!)) return false;
+            if (!MatchesParameterTypes(ctor.GetParameterTypes())) return false;
+            return true;
         }
         
         if (member is MethodInfo method)
         {
-            if (!MatchReturnType(method.ReturnType!)) return false;
-            if (!MatchParameterTypes(method.GetParameterTypes())) return false;
+            if (!MatchesReturnType(method.ReturnType!)) return false;
+            if (!MatchesParameterTypes(method.GetParameterTypes())) return false;
             return true;
         }
 
         throw new NotImplementedException();
-        //return false;
     }
 }

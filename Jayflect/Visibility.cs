@@ -19,27 +19,27 @@ public static class VisibilityExtensions
     public static BindingFlags ToBindingFlags(this Visibility visibility)
     {
         BindingFlags bindingFlags = default;
-        if (visibility.HasFlag(Visibility.Instance))
+        if (visibility.Has(Visibility.Instance))
             bindingFlags |= BindingFlags.Instance;
-        if (visibility.HasFlag(Visibility.Static))
+        if (visibility.Has(Visibility.Static))
             bindingFlags |= BindingFlags.Static;
-        if (visibility.HasFlag(Visibility.Public))
+        if (visibility.Has(Visibility.Public))
             bindingFlags |= BindingFlags.Public;
-        if (visibility.HasFlag(Visibility.NonPublic))
+        if (visibility.Has(Visibility.NonPublic))
             bindingFlags |= BindingFlags.NonPublic;
         return bindingFlags;
     }
-    
+
     public static Visibility ToVisibilityFlags(this BindingFlags bindingFlags)
     {
         Visibility visibility = default;
-        if (bindingFlags.HasFlag(BindingFlags.Instance))
+        if (bindingFlags.Has(BindingFlags.Instance))
             visibility |= Visibility.Instance;
-        if (bindingFlags.HasFlag(BindingFlags.Static))
+        if (bindingFlags.Has(BindingFlags.Static))
             visibility |= Visibility.Static;
-        if (bindingFlags.HasFlag(BindingFlags.Public))
+        if (bindingFlags.Has(BindingFlags.Public))
             visibility |= Visibility.Public;
-        if (bindingFlags.HasFlag(BindingFlags.NonPublic))
+        if (bindingFlags.Has(BindingFlags.NonPublic))
             visibility |= Visibility.NonPublic;
         return visibility;
     }

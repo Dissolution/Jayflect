@@ -6,6 +6,7 @@ using Jay.Comparison;
 using Jay.Dumping.Extensions;
 using Jay.Extensions;
 using Jayflect.Building.Adaption;
+using Jayflect.Searching;
 
 namespace Jayflect;
 
@@ -23,59 +24,6 @@ namespace Jayflect;
 
 public sealed class DynamicReflection : DynamicObject //, IReflection
 {
-    private sealed class MemberKey : IEquatable<MemberKey>
-    {
-        public string Name { get; init; } = "";
-
-        public Type ReturnType { get; init; } = typeof(void);
-
-        public Type[] ArgTypes { get; init; } = Type.EmptyTypes;
-
-        public MemberKey()
-        {
-        }
-        public MemberKey(string name, Type? returnType, params Type[] argTypes)
-        {
-            this.Name = name;
-            this.ReturnType = returnType ?? typeof(void);
-            this.ArgTypes = argTypes;
-        }
-        public void Deconstruct(out string name, out Type returnType, out Type[] argTypes)
-        {
-            name = Name;
-            returnType = ReturnType;
-            argTypes = ArgTypes;
-        }
-
-        public bool Equals(MemberKey? key)
-        {
-            return key is not null &&
-                   string.Equals(key.Name, this.Name) &&
-                   key.ReturnType == this.ReturnType &&
-                   MemoryExtensions.SequenceEqual<Type>(key.ArgTypes, this.ArgTypes);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            return obj is MemberKey key && Equals(key);
-        }
-        public override int GetHashCode()
-        {
-            HashCode hasher = new();
-            hasher.Add(Name);
-            hasher.Add(ReturnType);
-            foreach (var argType in ArgTypes)
-            {
-                hasher.Add(argType);
-            }
-            return hasher.ToHashCode();
-        }
-        public override string ToString()
-        {
-            return Dump($"{ReturnType} {Name}({ArgTypes})");
-        }
-    }
-
     private delegate object? ObjectInvoke([Instance] object? instance, params object?[] args);
 
     public static dynamic Of(object obj) => new DynamicReflection(obj);
@@ -85,7 +33,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     private readonly Type _targetType;
     private readonly IEqualityComparer _equalityComparer;
     private readonly IComparer _comparer;
-    private readonly Dictionary<MemberKey, ObjectInvoke?> _delegateCache;
+    private readonly Dictionary<MemberSearchOptions, ObjectInvoke?> _delegateCache;
 
     private DynamicReflection(object? target, Type targetType)
     {
@@ -106,13 +54,13 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     {
     }
 
-    private bool TryGetObjectInvoke(MemberKey key, [NotNullWhen(true)] out ObjectInvoke? objectInvoke)
+    private bool TryGetObjectInvoke(MemberSearchOptions key, [NotNullWhen(true)] out ObjectInvoke? objectInvoke)
     {
         objectInvoke = _delegateCache.GetOrAdd(key, CreateObjectInvoke);
         return objectInvoke is not null;
     }
 
-    private bool TryGetObjectInvoke(MemberKey key, Func<MemberKey, MethodBase?> findMethod,
+    private bool TryGetObjectInvoke(MemberSearchOptions key, Func<MemberSearchOptions, MethodBase?> findMethod,
         [NotNullWhen(true)] out ObjectInvoke? objectInvoke)
     {
         objectInvoke = _delegateCache.GetOrAdd(key,
@@ -128,7 +76,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     }
 
 
-    private ObjectInvoke? CreateObjectInvoke(MemberKey key)
+    private ObjectInvoke? CreateObjectInvoke(MemberSearchOptions key)
     {
         // Our common search flags
         var flags = BindingFlags.Public | BindingFlags.NonPublic;
@@ -139,7 +87,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
             flags |= BindingFlags.Instance;
 
         // Zero args
-        if (key.ArgTypes.Length == 0)
+        if (key.ParameterTypes?.Length == 0)
         {
             // Might be field.get, property.get, or no-args method
             FieldInfo? field = null;
@@ -171,7 +119,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
             // Fallthrough for Method check
         }
         // 1 arg
-        else if (key.ArgTypes.Length == 1)
+        else if (key.ParameterTypes?.Length == 1)
         {
             // might be field.set, property.set
             FieldInfo? field = null;
