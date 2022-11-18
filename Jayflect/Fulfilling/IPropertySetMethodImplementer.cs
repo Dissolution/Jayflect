@@ -104,7 +104,7 @@ internal class NotifyPropertySetMethodImplementer : Implementer, IPropertySetMet
             .Beq(out var lblReturn);
         if (_onPropertyChanging is not null)
         {
-            var ctor = MemberSearch.GetConstructor<PropertyChangingEventArgs>(typeof(string));
+            var ctor = MemberSearch.FindConstructor<PropertyChangingEventArgs>(typeof(string));
             Debugger.Break();
             emitter.Ldarg_0()
                 .Ldarg_0()
@@ -120,7 +120,7 @@ internal class NotifyPropertySetMethodImplementer : Implementer, IPropertySetMet
         
         if (_onPropertyChanged is not null)
         {
-            var ctor = MemberSearch.GetConstructor<PropertyChangedEventArgs>(typeof(string));
+            var ctor = MemberSearch.FindConstructor<PropertyChangedEventArgs>(typeof(string));
             Debugger.Break();
             emitter.Ldarg_0()
                 .Ldarg_0()

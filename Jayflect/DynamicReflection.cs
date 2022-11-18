@@ -1,33 +1,25 @@
-﻿using System.Collections;
-using System.Diagnostics;
-using System.Dynamic;
-using Jay;
+﻿using Jay;
 using Jay.Comparison;
 using Jay.Dumping.Extensions;
 using Jay.Extensions;
+
 using Jayflect.Building.Adaption;
 using Jayflect.Searching;
 
+using System.Collections;
+using System.Diagnostics;
+using System.Dynamic;
+
 namespace Jayflect;
 
-/*public interface IReflection : IEquatable<object>, IComparable<object>
+internal delegate object? ObjectInvoke([Instance] object? instance, params object?[] args);
+
+
+public sealed class DynamicReflection : DynamicObject
 {
-    object? this[string name] { get; set; }
-
-    Result TryGet(string name, out object? value);
-    Result TrySet(string name, object? value);
-
-    object? Invoke(string name, params object?[] args);
-
-    Result TryInvoke(string name, out object? result, params object?[] args);
-}*/
-
-public sealed class DynamicReflection : DynamicObject //, IReflection
-{
-    private delegate object? ObjectInvoke([Instance] object? instance, params object?[] args);
-
     public static dynamic Of(object obj) => new DynamicReflection(obj);
     public static dynamic Of(Type staticType) => new DynamicReflection(staticType);
+
 
     private object? _target;
     private readonly Type _targetType;
@@ -169,7 +161,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
                 exactness += e;
 
                 // Has to have a compat parameter sig
-                if (!RuntimeMethodAdapter.CanAdaptTypes(key.ArgTypes, meth.GetParameterTypes(), out e))
+                if (!RuntimeMethodAdapter.CanAdaptTypes(key.ParameterTypes, meth.GetParameterTypes(), out e))
                     return false;
                 exactness += e;
 
@@ -225,7 +217,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     }
 
     #region Operators
-    private MemberKey GetOpKey(ExpressionType expressionType, Type returnType, params Type[] argTypes)
+    private MemberSearchOptions GetKey(ExpressionType expressionType, Type returnType, params Type[] argTypes)
     {
         switch (expressionType)
         {
@@ -234,9 +226,9 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
             case ExpressionType.AddChecked:
                 break;
             case ExpressionType.And:
-            {
-                return new("op_BitwiseAnd", returnType, argTypes.Single());
-            }
+                {
+                    return new("op_BitwiseAnd", returnType, argTypes.Single());
+                }
             case ExpressionType.AndAlso:
                 break;
             case ExpressionType.ArrayLength:
@@ -258,9 +250,9 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
             case ExpressionType.Divide:
                 break;
             case ExpressionType.Equal:
-            {
-                return new("op_Equality", typeof(bool), Validate.LengthIs(argTypes, 2));
-            }
+                {
+                    return new("op_Equality", typeof(bool), Validate.LengthIs(argTypes, 2));
+                }
             case ExpressionType.ExclusiveOr:
                 break;
             case ExpressionType.GreaterThan:
@@ -402,9 +394,9 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
             case ExpressionType.IsTrue:
                 break;
             case ExpressionType.IsFalse:
-            {
-                return new("op_False", typeof(bool), argTypes.Single());
-            }
+                {
+                    return new("op_False", typeof(bool), argTypes.Single());
+                }
             default:
                 throw new ArgumentOutOfRangeException(nameof(expressionType), expressionType, null);
         }
@@ -417,9 +409,11 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
 
     public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object? result)
     {
-        MemberKey key = GetOpKey(binder.Operation, binder.ReturnType, _targetType, arg.GetType());
+        var key = GetKey(binder.Operation, binder.ReturnType, _targetType, arg.GetType());
         BindingFlags flags = Reflect.Flags.Static;
-        
+
+        Debugger.Break();
+
         if (TryGetObjectInvoke(key,
                 k => _targetType.GetMethod(k.Name, flags),
                 out var objectInvoke))
@@ -441,8 +435,10 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
 
     public override bool TryUnaryOperation(UnaryOperationBinder binder, out object? result)
     {
-        var key = GetOpKey(binder.Operation, binder.ReturnType, _targetType);
+        var key = GetKey(binder.Operation, binder.ReturnType, _targetType);
         var flags = Reflect.Flags.Static;
+
+        Debugger.Break();
 
         if (TryGetObjectInvoke(key,
                 k => _targetType.GetMethod(k.Name, flags),
@@ -482,7 +478,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object? result)
     {
         var (objects, argTypes) = FixArgs(indexes);
-        MemberKey key = new("get_Item", binder.ReturnType, argTypes);
+        MemberSearchOptions key = new("get_Item", binder.ReturnType, argTypes);
         if (TryGetObjectInvoke(key, out var objectInvoke))
         {
             result = objectInvoke(_target, objects);
@@ -501,7 +497,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
         var argTypes = objects.ToTypeArray();
 
         // do not use binder.ReturnType, it will be object and we definitely want void
-        MemberKey key = new("set_Item", typeof(void), argTypes);
+        MemberSearchOptions key = new("set_Item", typeof(void), argTypes);
         if (TryGetObjectInvoke(key, out var objectInvoke))
         {
             objectInvoke(_target, objects);
@@ -522,7 +518,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     #region Member Interaction
     public override bool TryGetMember(GetMemberBinder binder, out object? result)
     {
-        MemberKey key = new(binder.Name, binder.ReturnType);
+        MemberSearchOptions key = new(binder.Name, binder.ReturnType);
         if (TryGetObjectInvoke(key, out var objectInvoke))
         {
             result = objectInvoke(_target);
@@ -534,7 +530,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
 
     public override bool TrySetMember(SetMemberBinder binder, object? value)
     {
-        MemberKey key = new(binder.Name, typeof(void), typeof(object));
+        MemberSearchOptions key = new(binder.Name, typeof(void), typeof(object));
         if (TryGetObjectInvoke(key, out var objectInvoke))
         {
             objectInvoke(_target, value);
@@ -546,7 +542,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     public override bool TryInvokeMember(InvokeMemberBinder binder, object?[]? args, out object? result)
     {
         var (objects, argTypes) = FixArgs(args);
-        var key = new MemberKey(binder.Name, binder.ReturnType, argTypes);
+        MemberSearchOptions key = new(binder.Name, binder.ReturnType, argTypes);
         if (TryGetObjectInvoke(key, out var objectInvoke))
         {
             result = objectInvoke(_target, objects);
@@ -567,7 +563,7 @@ public sealed class DynamicReflection : DynamicObject //, IReflection
     public override bool TryInvoke(InvokeBinder binder, object?[]? args, out object? result)
     {
         var (objects, argTypes) = FixArgs(args);
-        MemberKey key = new("Invoke", binder.ReturnType, argTypes);
+        MemberSearchOptions key = new("Invoke", binder.ReturnType, argTypes);
         if (TryGetObjectInvoke(key, out var objectInvoke))
         {
             result = objectInvoke(_target, objects);

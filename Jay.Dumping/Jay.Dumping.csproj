@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Jay.Core\Jay.Core.csproj" />
+      <ProjectReference Include="..\Jay.Text\Jay.Text.csproj" />
     </ItemGroup>
 
 </Project>

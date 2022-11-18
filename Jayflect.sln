@@ -1,12 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jayflect", "Jayflect\Jayflect.csproj", "{50A44DD2-380C-47E4-92C1-888A07B97EF3}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33103.184
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jayflect", "Jayflect\Jayflect.csproj", "{50A44DD2-380C-47E4-92C1-888A07B97EF3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleSandbox", "ConsoleSandbox\ConsoleSandbox.csproj", "{1B12962B-4219-4395-887C-B23F6FFDF4C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleSandbox", "ConsoleSandbox\ConsoleSandbox.csproj", "{1B12962B-4219-4395-887C-B23F6FFDF4C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jay.Core", "Jay.Core\Jay.Core.csproj", "{E91052C6-3AE0-48DF-B079-FB81E743209A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jay.Core", "Jay.Core\Jay.Core.csproj", "{E91052C6-3AE0-48DF-B079-FB81E743209A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jay.Dumping", "Jay.Dumping\Jay.Dumping.csproj", "{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jay.Dumping", "Jay.Dumping\Jay.Dumping.csproj", "{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jay.Text", "Jay.Text\Jay.Text.csproj", "{ED539732-4D15-4B0D-BBC7-19AA3BF31BED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +35,15 @@ Global
 		{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F84417C-DAE4-4C2F-A5F9-9D7D19E73E8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED539732-4D15-4B0D-BBC7-19AA3BF31BED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED539732-4D15-4B0D-BBC7-19AA3BF31BED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED539732-4D15-4B0D-BBC7-19AA3BF31BED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED539732-4D15-4B0D-BBC7-19AA3BF31BED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2B943A09-DBE0-4916-BDD4-24C4219AD29B}
 	EndGlobalSection
 EndGlobal

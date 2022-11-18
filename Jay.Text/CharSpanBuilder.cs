@@ -1,18 +1,21 @@
 ﻿using System.Buffers;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 // ReSharper disable UnusedParameter.Local
 
-namespace Jay.Dumping.Interpolated;
+namespace Jay.Text;
 
 /// <summary>Provides a handler used by the language compiler to process interpolated strings into <see cref="string"/> instances.</summary>
 [InterpolatedStringHandler]
-internal ref struct CharSpanBuilder
+public ref struct CharSpanBuilder
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)] // becomes a constant when inputs are constant
-    internal static int GetStartingCapacity(int literalLength, int formattedCount) =>
+    private static int GetStartingCapacity(int literalLength, int formattedCount) =>
         Math.Clamp(MINIMUM_CAPACITY, literalLength + (formattedCount * 16), MAXIMUM_CAPACITY);
     
     private const int MINIMUM_CAPACITY = 1024;
-    private const int MAXIMUM_CAPACITY = 0x3FFFFFDF; // string.MaxLength
+    private const int MAXIMUM_CAPACITY = 0x3FFFFFDF; // string.MaxLength < Array.MaxLength
 
     /// <summary>Array rented from the array pool and used to back <see cref="_chars"/>.</summary>
     private char[]? _charArray;
@@ -22,25 +25,26 @@ internal ref struct CharSpanBuilder
     private int _index;
 
     /// <summary>Gets a span of the written characters thus far.</summary>
-    internal Span<char> Written
+    public Span<char> Written
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _chars.Slice(0, _index);
     }
 
-    internal Span<char> Available
+    public Span<char> Available
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _chars.Slice(_index);
     }
 
-    internal int Length
+    public int Length
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _index;
+        set => _index = Math.Clamp(0, value, Capacity);
     }
-    
-    internal int Capacity
+
+    public int Capacity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _chars.Length;
@@ -58,13 +62,15 @@ internal ref struct CharSpanBuilder
         _charArray = null;
         _index = 0;
     }
-    
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public CharSpanBuilder(int literalLength, int formattedCount)
     {
         _chars = _charArray = ArrayPool<char>.Shared.Rent(GetStartingCapacity(literalLength, formattedCount));
         _index = 0;
     }
 
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public CharSpanBuilder(int literalLength, int formattedCount, Span<char> initialBuffer)
     {
         _chars = initialBuffer;
@@ -124,22 +130,18 @@ internal ref struct CharSpanBuilder
     #endregion
     
     #region Append
-    /// <summary>Writes the specified string to the handler.</summary>
-    /// <param name="value">The string to write.</param>
-    private void AppendStringDirect(string value)
+    private void AppendStringDirect(string text)
     {
-        if (value.TryCopyTo(Available))
+        Debug.Assert(text is not null);
+        if (!text.TryCopyTo(Available))
         {
-            _index += value.Length;
-        }
-        else
-        {
-            GrowThenCopy(value);
+            GrowThenCopy(text);
         }
     }
-    
+
     /// <summary>Writes the specified string to the handler.</summary>
     /// <param name="text">The string to write.</param>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendLiteral(string text)
     {
@@ -178,10 +180,11 @@ internal ref struct CharSpanBuilder
 
         AppendStringDirect(text);
     }
-    
+
     /// <summary>Writes the specified value to the handler.</summary>
     /// <param name="value">The value to write.</param>
     /// <typeparam name="T">The type of the value to write.</typeparam>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void AppendFormatted<T>(T? value)
     {
         string? str;
@@ -215,7 +218,8 @@ internal ref struct CharSpanBuilder
             AppendStringDirect(str);
         }
     }
-    
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void AppendFormatted<T>(T value, string? format)
     {
         string? str;
@@ -251,9 +255,9 @@ internal ref struct CharSpanBuilder
             AppendStringDirect(str);
         }
     }
-        #endregion
+    #endregion
 
-
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void AppendFormatted(char ch)
     {
         int pos = _index;
@@ -268,7 +272,8 @@ internal ref struct CharSpanBuilder
             GrowThenCopy(new ReadOnlySpan<char>(in ch));
         }
     }
-    
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void AppendFormatted(ReadOnlySpan<char> value)
     {
         // Fast path for when the value fits in the current buffer
@@ -282,13 +287,16 @@ internal ref struct CharSpanBuilder
         }
     }
 
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void AppendFormatted(string? value)
     {
         if (value is not null)
             AppendLiteral(value);
     }
 
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void AppendFormatted(object? obj) => AppendFormatted<object>(obj);
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void AppendFormatted(object? value, string? format) => AppendFormatted<object?>(value, format);
 
     /// <summary>Clears the handler, returning any rented array to the pool.</summary>
@@ -302,6 +310,12 @@ internal ref struct CharSpanBuilder
             ArrayPool<char>.Shared.Return(toReturn);
         }
     }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj) => false;
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode() => 0;
 
     public string ToStringAndDispose()
     {

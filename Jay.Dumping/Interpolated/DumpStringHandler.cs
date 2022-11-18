@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.ComponentModel;
-
+using Jay.Text;
 // ReSharper disable UnusedParameter.Local
 
 namespace Jay.Dumping.Interpolated;

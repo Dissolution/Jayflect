@@ -28,8 +28,19 @@ public sealed record class MemberSearchOptions
         this.ReturnType = returnType;
         this.ParameterTypes = parameterTypes;
     }
-    
-    
+
+    public MemberSearchOptions(
+       string? name = null,
+       Type? returnType = null,
+       params Type[]? parameterTypes)
+    {
+        this.Name = name;
+        this.Visibility = Visibility.Any;
+        this.ReturnType = returnType;
+        this.ParameterTypes = parameterTypes;
+    }
+
+
     private bool MatchesName(string memberName)
     {
         if (Name is null) return true;
